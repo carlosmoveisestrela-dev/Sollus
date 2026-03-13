@@ -9,11 +9,10 @@ export default function Sidebar() {
       <nav>
         <ul>
           <li>Dashboard</li>
-          <li>Empresas</li>
-          <li>Usuários</li>
-          <li>Financeiro</li>
-          <li>Relatórios</li>
-          <li>Configurações</li>
+          <li>Agenda</li>
+          <li>Cadastros</li>
+          <li>Movimento Financeiro</li>
+          <li>Lançamento Item</li>
         </ul>
       </nav>
     </aside>
