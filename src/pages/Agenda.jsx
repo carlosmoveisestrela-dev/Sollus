@@ -35,7 +35,6 @@ export default function Agenda() {
     };
 
     return (
-        <Layout>
             <div className="agenda-page">
                 <h1>Minha Agenda</h1>
 
@@ -89,6 +88,5 @@ export default function Agenda() {
                     )}
                 </section>
             </div>
-        </Layout>
     )
 }

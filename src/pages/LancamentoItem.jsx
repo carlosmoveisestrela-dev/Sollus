@@ -39,8 +39,6 @@ export default function LancamentoItem() {
     }
 
     return (
-        <Layout>
-
             <div className="pagina">
 
                 <h2>Lançamento Item</h2>
@@ -114,7 +112,5 @@ export default function LancamentoItem() {
                 </button>
 
             </div>
-
-        </Layout >
     )
 }

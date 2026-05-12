@@ -4,6 +4,7 @@ import "../styles/movimentoFinanceiro.css"
 
 export default function MovimentoFinanceiro() {
 
+    const [uniNegCodigo, setUniNegCodigo] = useState("")
     const [empresaCodigo, setEmpresaCodigo] = useState("")
     const [pessoaCodigo, setPessoaCodigo] = useState("")
     const [titulo, setTitulo] = useState("")
@@ -19,10 +20,10 @@ export default function MovimentoFinanceiro() {
     const salvarMovimento = () => {
 
         const movimentoFinanceiro = {
+            Uni_Neg_Codigo: uniNegCodigo, 
             Empresa_Codigo: empresaCodigo,
             Pessoa_Codigo: pessoaCodigo,
             Titulo: titulo,
-            Duplicata: duplicata,
             Dt_Emissao: dtEmissao,
             Dt_Vencimento: dtVencimento,
             Dt_Pagamento: dtPagamento,
@@ -35,8 +36,6 @@ export default function MovimentoFinanceiro() {
     }
 
     return (
-        <Layout>
-
             <div className="pagina">
 
                 <h2>Movimento Financeiro</h2>
@@ -44,16 +43,16 @@ export default function MovimentoFinanceiro() {
                 <div className="form-grid">
 
                     <div className="campo">
-                        <label>Empresa</label>
+                        <label>ID Unidade Negócio</label>
                         <input
                             type="number"
-                            value={empresaCodigo}
+                            value={uniNegCodigo}
                             onChange={(e) => setEmpresaCodigo(e.target.value)}
                         />
                     </div>
 
                     <div className="campo">
-                        <label>Pessoa</label>
+                        <label>ID Empresa</label>
                         <input
                             type="number"
                             value={pessoaCodigo}
@@ -62,7 +61,7 @@ export default function MovimentoFinanceiro() {
                     </div>
 
                     <div className="campo">
-                        <label>Título</label>
+                        <label>ID Pessoa</label>
                         <input
                             type="text"
                             value={titulo}
@@ -71,7 +70,7 @@ export default function MovimentoFinanceiro() {
                     </div>
 
                     <div className="campo">
-                        <label>Duplicata</label>
+                        <label>Titulo</label>
                         <input
                             type="text"
                             value={duplicata}
@@ -116,7 +115,7 @@ export default function MovimentoFinanceiro() {
                     </div>
 
                     <div className="campo">
-                        <label>Tipo Lançamento</label>
+                        <label>Cod. Centro Custo</label>
                         <input
                             type="number"
                             value={tipoLancamentoCodigo}
@@ -125,7 +124,52 @@ export default function MovimentoFinanceiro() {
                     </div>
 
                     <div className="campo">
-                        <label>Origem Lançamento</label>
+                        <label>Cod. Tipo Custo</label>
+                        <input
+                            type="number"
+                            value={origemLancamentoCodigo}
+                            onChange={(e) => setOrigemLancamentoCodigo(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="campo">
+                        <label>Cod. Tipo Lançamento</label>
+                        <input
+                            type="number"
+                            value={origemLancamentoCodigo}
+                            onChange={(e) => setOrigemLancamentoCodigo(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="campo">
+                        <label>Cod. Origem Lançamento</label>
+                        <input
+                            type="number"
+                            value={origemLancamentoCodigo}
+                            onChange={(e) => setOrigemLancamentoCodigo(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="campo">
+                        <label>Cod. Evento Lançamento</label>
+                        <input
+                            type="number"
+                            value={origemLancamentoCodigo}
+                            onChange={(e) => setOrigemLancamentoCodigo(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="campo">
+                        <label>Valor</label>
+                        <input
+                            type="number"
+                            value={origemLancamentoCodigo}
+                            onChange={(e) => setOrigemLancamentoCodigo(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="campo">
+                        <label>Observação Lançamento</label>
                         <input
                             type="number"
                             value={origemLancamentoCodigo}
@@ -141,6 +185,5 @@ export default function MovimentoFinanceiro() {
 
             </div>
 
-        </Layout>
     )
 }
