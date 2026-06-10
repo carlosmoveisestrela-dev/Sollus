@@ -1,0 +1,102 @@
+.agenda-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  /* background-color: #707070; */
+}
+
+.agenda-titulo {
+  margin-bottom: 24px !important;
+}
+
+.agenda-titulo {
+  margin-bottom: 24px !important;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.agenda-lista-separador {
+  margin-top: 32px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.agenda-lista-titulo {
+  margin-bottom: 12px !important;
+  padding-top: 32px;
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.agenda-titulo .anticon {
+  margin-right: 8px;
+  color: #000000;
+}
+
+.agenda-form-card {
+  margin-bottom: 0 !important;
+  border-radius: 12px !important;
+}
+
+.agenda-calendario-card {
+  max-height: 465px;
+  overflow: hidden;
+  border-radius: 12px !important;
+}
+
+.agenda-calendario-card .ant-picker-calendar {
+  border-radius: 12px;
+}
+
+.agenda-calendario-card .ant-card-body {
+  padding: 16px !important;
+}
+
+.agenda-calendario-card .ant-picker-calendar-date {
+  height: 60px !important;
+  min-height: 60px !important;
+}
+
+.agenda-calendario-card .ant-picker-cell {
+  height: 60px !important;
+}
+
+.agenda-lista-titulo {
+  margin-bottom: 12px !important;
+}
+
+.evento-card {
+  margin-bottom: 10px;
+  border-radius: 10px !important;
+}
+
+.evento-card .ant-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px !important;
+}
+
+.evento-data {
+  font-size: 12px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.evento-titulo {
+  margin: 4px 0 !important;
+}
+
+.evento-badge span {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.modal-evento-card {
+  margin-bottom: 8px;
+  border-radius: 10px !important;
+}
+
+.modal-evento-card .ant-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
