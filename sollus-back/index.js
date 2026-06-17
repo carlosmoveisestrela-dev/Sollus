@@ -2,7 +2,8 @@ const express = require("express")
 const cors = require("cors")
 require("dotenv").config()
 
-const uniNegocioRoutes = require("./routes/uniNegocioRoutes")
+const empresaRoutes = require("./src/routes/empresaRoutes")
+const pessoaRoutes = require("./src/routes/pessoaRoutes")
 
 const app = express()
 
@@ -15,7 +16,8 @@ app.get("/", (req, res) => {
   res.json({ message: "API Sollus funcionando!" })
 })
 
-app.use("/uni-negocio", uniNegocioRoutes)
+app.use("/empresa", empresaRoutes)
+app.use("/pessoa", pessoaRoutes)
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`)

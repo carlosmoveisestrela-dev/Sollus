@@ -25,7 +25,8 @@ const getById = async (req, res) => {
 // Criar
 const create = async (req, res) => {
   try {
-    const { empresa_codigo, empresa_nome } = req.body
+    const { empresa_nome } = req.body
+    const empresa_codigo = Math.floor(10000 + Math.random() * 90000)
     const result = await pool.query(
       "INSERT INTO empresa (empresa_codigo, empresa_nome) VALUES ($1, $2) RETURNING *",
       [empresa_codigo, empresa_nome]
@@ -40,10 +41,10 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { empresa_codigo, empresa_nome } = req.body
+    const { empresa_nome } = req.body
     const result = await pool.query(
-      "UPDATE empresa SET empresa_codigo = $1, empresa_nome = $2 WHERE empresa_codigo = $3 RETURNING *",
-      [empresa_codigo, empresa_nome, id]
+      "UPDATE empresa SET empresa_nome = $1 WHERE empresa_codigo = $2 RETURNING *",
+      [empresa_nome, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
