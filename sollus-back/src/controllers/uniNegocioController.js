@@ -14,7 +14,7 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("SELECT * FROM uni_negocio WHERE und_neg_codigo = $1", [id])
+    const result = await pool.query("SELECT * FROM uni_negocio WHERE und_neg_codigo = $1 AND und_neg_nome = $2", [id, req.body.und_neg_nome])
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
   } catch (error) {
