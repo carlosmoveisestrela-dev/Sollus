@@ -1,6 +1,7 @@
 import React from "react"
 import { Layout, Menu } from "antd"
 import { useNavigate, useLocation } from "react-router-dom"
+import "../styles/sidebar.css"
 import {
   DashboardOutlined,
   CalendarOutlined,
@@ -27,63 +28,74 @@ export default function Sidebar() {
   const items = [
     { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
     { key: "/agenda", icon: <CalendarOutlined />, label: "Agenda" },
-    { 
-      key: "/cadastro", 
-      icon: <AppstoreOutlined />, 
+    {
+      key: "/cadastro",
+      icon: <AppstoreOutlined />,
       label: "Cadastros",
       children: [
 
-        { key: "/cadastro/uni-negocio", 
+        {
+          key: "/cadastro/uni-negocio",
           icon: <ShopOutlined />,
-          label: "Uni. Negócio" 
+          label: "Uni. Negócio"
         },
 
-        { key: "/cadastro/empresa", 
-          icon: <BankOutlined />, 
-          label: "Empresa" 
-        },
-        
-        { key: "/cadastro/pessoa", 
-          icon: <UserOutlined />, 
-          label: "Pessoa" 
+        {
+          key: "/cadastro/empresa",
+          icon: <BankOutlined />,
+          label: "Empresa"
         },
 
-        { key: "/cadastro/centro-custo", 
-          icon: <ApartmentOutlined />, 
-          label: "Centro de Custo" 
+        {
+          key: "/cadastro/pessoa",
+          icon: <UserOutlined />,
+          label: "Pessoa"
         },
 
-        { key: "/cadastro/tipo-custo", 
-          icon: <DollarOutlined />, 
-          label: "Tipo Custo" 
+        {
+          key: "/cadastro/centro-custo",
+          icon: <ApartmentOutlined />,
+          label: "Centro de Custo"
         },
 
-        { key: "/cadastro/tipo-lancamento",
+        {
+          key: "/cadastro/tipo-custo",
+          icon: <DollarOutlined />,
+          label: "Tipo Custo"
+        },
+
+        {
+          key: "/cadastro/tipo-lancamento",
           icon: <SwapOutlined />,
           label: "Tipo Lançamento"
         },
 
-        { key: "/cadastro/origem-lancamento",
+        {
+          key: "/cadastro/origem-lancamento",
           icon: <ImportOutlined />,
           label: "Origem Lançamento"
         },
 
-        { key: "/cadastro/evento-lancamento",
+        {
+          key: "/cadastro/evento-lancamento",
           icon: <CalendarOutlined />,
           label: "Evento Lançamento"
         },
 
-        { key: "/cadastro/categoria",
+        {
+          key: "/cadastro/categoria",
           icon: <TagOutlined />,
           label: "Categoria"
         },
 
-        { key: "/cadastro/item",
+        {
+          key: "/cadastro/item",
           icon: <UnorderedListOutlined />,
           label: "Item"
         },
 
-        { key: "/cadastro/carteira",
+        {
+          key: "/cadastro/carteira",
           icon: <WalletOutlined />,
           label: "Carteira"
         }
@@ -100,9 +112,13 @@ export default function Sidebar() {
       height: '100vh',
       left: 0,
       top: 0,
-      zIndex: 100
+      zIndex: 100,
+      overflow: 'auto',
+      overflowX: 'hidden'
     }}>
-      <h2 style={{ color: '#fff', textAlign: 'center', padding: '16px 0' }}>Sollus</h2>
+
+      <h2 className="sidebar-logo">Sollus</h2>
+      
       <Menu
         theme="dark"
         mode="inline"

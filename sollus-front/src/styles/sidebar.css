@@ -1,15 +1,10 @@
-.sidebar {
-  width: 220px;
-  min-height: 100%;
-  flex-shrink: 0;
-  background: #0f172a;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
+/* Sidebar (Ant Design Sider) */
+.ant-layout-sider {
+  background: #0f172a !important;
 }
 
-/* Logo */
-.sidebar .logo {
+/* Logo/título "Sollus" */
+.sidebar-logo {
   font-size: 18px;
   font-weight: 700;
   color: #f8fafc;
@@ -17,56 +12,78 @@
   padding: 28px 24px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   margin: 0;
+  text-align: center;
 }
 
-/* Nav */
-.sidebar nav {
-  flex: 1;
+/* Menu (fundo transparente pra herdar o do Sider) */
+.ant-layout-sider .ant-menu {
+  background: transparent !important;
+  border-inline-end: none !important;
   padding: 12px 0;
 }
 
-.sidebar nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar nav ul li {
-  margin: 2px 12px;
-}
-
-.sidebar nav ul li a {
-  text-decoration: none;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-radius: 8px;
+/* Itens do menu (nível principal e submenu) */
+.ant-layout-sider .ant-menu-item,
+.ant-layout-sider .ant-menu-submenu-title {
+  color: #94a3b8 !important;
+  margin: 2px 12px !important;
+  border-radius: 8px !important;
   font-size: 14px;
   font-weight: 500;
+  width: calc(100% - 24px) !important;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.sidebar nav ul li a:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f1f5f9;
+/* Hover */
+.ant-layout-sider .ant-menu-item:hover,
+.ant-layout-sider .ant-menu-submenu-title:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f1f5f9 !important;
 }
 
-/* Link ativo */
-.sidebar nav ul li a.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+/* Item ativo/selecionado */
+.ant-layout-sider .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
   font-weight: 600;
 }
 
-/* Linha de destaque no active */
-.sidebar nav ul li a.active::before {
-  content: "";
-  display: inline-block;
-  width: 3px;
-  height: 16px;
-  background: #2d6a2d;
-  border-radius: 2px;
-  margin-right: 10px;
-  flex-shrink: 0;
+/* Linha de destaque no item ativo (like antes) */
+.ant-layout-sider .ant-menu-item-selected::after {
+  border-inline-end: 3px solid #2d6a2d !important;
+}
+
+/* Ícones do menu */
+.ant-layout-sider .ant-menu-item .anticon,
+.ant-layout-sider .ant-menu-submenu-title .anticon {
+  color: inherit;
+}
+
+/* Submenu (itens filhos de "Cadastros") */
+.ant-layout-sider .ant-menu-sub {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Scrollbar customizada da sidebar */
+.ant-layout-sider::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ant-layout-sider::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ant-layout-sider::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.ant-layout-sider::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Firefox */
+.ant-layout-sider {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }

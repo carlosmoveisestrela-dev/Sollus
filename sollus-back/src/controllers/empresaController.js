@@ -26,11 +26,16 @@ const getById = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { empresa_nome } = req.body
-    const empresa_codigo = Math.floor(10000 + Math.random() * 90000)
+
+    if (!empresa_nome || empresa_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da empresa é obrigatório.' })
+    }
+
     const result = await pool.query(
-      "INSERT INTO empresa (empresa_codigo, empresa_nome) VALUES ($1, $2) RETURNING *",
-      [empresa_codigo, empresa_nome]
+      "INSERT INTO empresa (empresa_nome) VALUES ($1) RETURNING *",
+      [empresa_nome]
     )
+
     res.status(201).json(result.rows[0])
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -57,7 +62,10 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("DELETE FROM empresa WHERE empresa_codigo = $1 RETURNING *", [id])
+    const result = await pool.query(
+      "DELETE FROM empresa WHERE empresa_codigo = $1 RETURNING *",
+      [id]
+    )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json({ message: "Deletado com sucesso" })
   } catch (error) {
@@ -65,4 +73,4 @@ const remove = async (req, res) => {
   }
 }
 
-module.exports = { getAll, getById, create, update ,remove }
+module.exports = { getAll, getById, create, update, remove }

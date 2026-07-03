@@ -9,15 +9,6 @@ body {
   font-family: sans-serif;
 }
 
-.formulario {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 32px 36px 36px;
-  width: 100%;
-  max-width: 900px;
-  margin: 60px;
-}
-
 .formulario h1 {
   font-size: 22px;
   font-weight: 700;
@@ -41,9 +32,12 @@ body {
 /* Grid de campos: 2 por linha por padrão */
 .grupo {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  height: 100%;
+  grid-template-columns: 3fr 3fr;
+  align-items: center;
   gap: 16px;
   margin-bottom: 4px;
+  right: 100px;
 }
 
 /* Para seções com campo único */
@@ -122,12 +116,12 @@ body {
 .botoes {
   display: flex;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 20px;
 }
 
 .botoes .salvar {
-  flex: 1;
-  height: 44px;
+  padding: 0 28px;
+  height: 35px;
   background: #2d6a2d;
   color: #fff;
   font-size: 15px;
@@ -141,9 +135,14 @@ body {
   background: #255525;
 }
 
+.botoes .salvar:disabled {
+  background: #7aab7a;
+  cursor: not-allowed;
+}
+
 .botoes .cancelar {
-  height: 44px;
-  padding: 0 28px;
+  height: 35px;
+  padding: 0 20px;
   background: #fff;
   color: #555;
   font-size: 15px;
@@ -155,4 +154,173 @@ body {
 
 .botoes .cancelar:hover {
   background: #f5f5f5;
+}
+
+/* Erro de validação */
+.erro {
+  font-size: 12px;
+  color: #c0392b;
+  margin-top: 2px;
+}
+
+/* Search */
+.lista-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 260px;
+}
+
+.search-wrapper input {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #cdd3de;
+  border-radius: 6px;
+  padding: 0 10px 0 34px;
+  font-size: 13px;
+  color: #111;
+  background: #f7f9fc;
+  outline: none;
+}
+
+.search-wrapper input:focus {
+  border-color: #3a7abf;
+  box-shadow: 0 0 0 2px rgba(58, 122, 191, 0.12);
+  background: #fff;
+}
+
+.search-wrapper .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Tabela */
+.lista-empresas {
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.lista-empresas table {
+  text-align: center;
+  width: 100%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+.lista-empresas thead tr {
+  background: #f7f3f3;
+}
+
+.lista-empresas th {
+  text-align: center;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+  border-bottom: 1.5px solid #b3b3b3;
+}
+
+.lista-empresas td {
+  padding: 10px 14px;
+  color: #222;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.lista-empresas tbody tr:hover {
+  background: #f7f9fc;
+}
+
+.lista-empresas tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lista-empresas th:nth-child(1),
+.lista-empresas td:nth-child(1) {
+  width: 150px;
+}
+
+.lista-empresas th:nth-child(2) {
+  width: 160px;   /* Nome da empresa */
+}
+
+.lista-empresas td:nth-child(2) {
+  text-align: left;
+  padding-left: 150px;
+}
+
+.lista-empresas th:nth-child(3),
+.lista-empresas td:nth-child(3) {
+  width: 220px;   /* Ações */
+}
+
+.lista-empresas .vazio {
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.lista-empresas .codigo {
+  font-weight: 600;
+  color: #000000;
+  width: 100px;
+}
+
+.empresa-row td {
+  text-align: center;
+}
+
+.sem-empresas {
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.acoes {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-primary  {
+  background-color: #2d6a2d;
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.btn-primary:hover {
+  background-color: #255525;
+  border-color: #255525;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border: none;
+  color: #fff;
+  padding: 7px 14px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
 }
