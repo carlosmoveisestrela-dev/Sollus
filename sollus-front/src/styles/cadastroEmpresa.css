@@ -31,34 +31,17 @@ body {
 
 /* Grid de campos: 2 por linha por padrão */
 .grupo {
-  display: grid;
-  height: 100%;
-  grid-template-columns: 3fr 3fr;
-  align-items: center;
+  display: flex;
   gap: 16px;
+  align-items: center;
   margin-bottom: 4px;
-  right: 100px;
-}
-
-/* Para seções com campo único */
-.grupo.grupo-1 {
-  grid-template-columns: 1fr;
-}
-
-/* Para seções com 3 colunas */
-.grupo.grupo-3 {
-  grid-template-columns: 1fr 1fr 1fr;
-}
-
-/* Para seções com 4 colunas */
-.grupo.grupo-4 {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .campo {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  width: 260px;
 }
 
 .campo label {
@@ -120,11 +103,11 @@ body {
 }
 
 .botoes .salvar {
-  padding: 0 28px;
-  height: 35px;
+  padding: 0 20px;
+  height: 30px;
   background: #2d6a2d;
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   border: none;
   border-radius: 7px;
@@ -140,22 +123,6 @@ body {
   cursor: not-allowed;
 }
 
-.botoes .cancelar {
-  height: 35px;
-  padding: 0 20px;
-  background: #fff;
-  color: #555;
-  font-size: 15px;
-  font-weight: 500;
-  border: 1px solid #cdd3de;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.botoes .cancelar:hover {
-  background: #f5f5f5;
-}
-
 /* Erro de validação */
 .erro {
   font-size: 12px;
@@ -164,13 +131,6 @@ body {
 }
 
 /* Search */
-.lista-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
 .search-wrapper {
   position: relative;
   width: 260px;
@@ -204,12 +164,36 @@ body {
   pointer-events: none;
 }
 
+/* Cabeçalho da lista com seletor de itens por página */
+.lista-header-controle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+}
+
+.lista-header-controle h2 {
+  margin: 0;
+  border-bottom: none;
+}
+
+.seletor-tamanho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seletor-tamanho label {
+  font-size: 13px;
+  color: #555;
+}
+
 /* Tabela */
 .lista-empresas {
   overflow-x: auto;
   display: flex;
-  justify-content: center;
-  overflow-x: auto;
+  flex-direction: column;
+  align-items: center;
 }
 
 .lista-empresas table {
@@ -254,17 +238,17 @@ body {
 }
 
 .lista-empresas th:nth-child(2) {
-  width: 160px;   /* Nome da empresa */
+  width: 160px; /* Nome da empresa */
 }
 
 .lista-empresas td:nth-child(2) {
   text-align: left;
-  padding-left: 150px;
+  padding-left: 20px;
 }
 
 .lista-empresas th:nth-child(3),
 .lista-empresas td:nth-child(3) {
-  width: 220px;   /* Ações */
+  width: 140px; /* Ações */
 }
 
 .lista-empresas .vazio {
@@ -284,20 +268,13 @@ body {
   text-align: center;
 }
 
-.sem-empresas {
-  text-align: center;
-  color: #aaa;
-  font-size: 13px;
-  padding: 24px 0;
-}
-
 .acoes {
   display: flex;
   gap: 15px;
   justify-content: center;
 }
 
-.btn-primary  {
+.btn-primary {
   background-color: #2d6a2d;
   color: #fff;
   border: none;
@@ -323,4 +300,45 @@ body {
 .btn-danger:hover {
   background-color: #c82333;
   border-color: #c82333;
+}
+
+/* Paginação */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0 0;
+  border-top: 1px solid #edf0f5;
+}
+
+.paginacao button {
+  height: 32px;
+  padding: 0 16px;
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #cdd3de;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.paginacao button:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #3a7abf;
+  color: #3a7abf;
+}
+
+.paginacao button:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+  background: #f9f9f9;
+}
+
+.paginacao span {
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
 }

@@ -50,7 +50,7 @@
 
 /* Linha de destaque no item ativo (like antes) */
 .ant-layout-sider .ant-menu-item-selected::after {
-  border-inline-end: 3px solid #2d6a2d !important;
+  border-inline-end: 6px solid #49ff49 !important;
 }
 
 /* Ícones do menu */

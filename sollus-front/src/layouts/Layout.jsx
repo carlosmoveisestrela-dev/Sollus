@@ -10,10 +10,10 @@ export default function Layout({ children }) {
     <AntLayout style={{ marginLeft: 220, minHeight: "100vh" }}>
       <Sidebar />
       <AntLayout style={{ minHeight: "100vh" }}>
-        <Content style={{ padding: '24px' }}>
+        <Content style={{ padding: '24px 24px 0' }}>
           {children}
         </Content>
-        <Footer style={{ textAlign: 'center', color: '#888', fontSize: '13px' }}>
+        <Footer style={{ textAlign: 'center', color: '#888', fontSize: '13px', padding: '20px 24px', marginTop: 0 }}>
           © {new Date().getFullYear()} Sollus. Todos os direitos reservados.
         </Footer>
       </AntLayout>
