@@ -4,6 +4,7 @@ require("dotenv").config()
 
 const empresaRoutes = require("./src/routes/empresaRoutes")
 const pessoaRoutes = require("./src/routes/pessoaRoutes")
+const uniNegocioRoutes = require("./src/routes/uniNegocioRoutes")  // 👈 novo
 
 const app = express()
 
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 
 app.use("/empresa", empresaRoutes)
 app.use("/pessoa", pessoaRoutes)
+app.use("/unidade-negocio", uniNegocioRoutes)  // 👈 novo
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`)

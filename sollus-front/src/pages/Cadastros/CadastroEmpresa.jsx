@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Select, Modal, Input } from "antd"
+import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroEmpresa.css"
 
@@ -14,12 +14,14 @@ export default function CadastroEmpresa() {
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
-  const [tamanhoPagina, setTamanhoPagina] = useState(4)
+  const [tamanhoPagina, setTamanhoPagina] = useState(12)
   const [modalAberto, setModalAberto] = useState(false)
+  const [modoEdicao, setModoEdicao] = useState(false)
   const [empresaEdicao, setEmpresaEdicao] = useState(null)
   const [nomeEditando, setNomeEditando] = useState("")
   const [salvandoEdicao, setSalvandoEdicao] = useState(false)
-
+  const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -56,81 +58,54 @@ export default function CadastroEmpresa() {
     setPagina(1)
   }
 
-  async function deletarEmpresa(id) {
-    Modal.confirm({
-      title: "Confirmação",
-      content: "Tem certeza que deseja excluir esta empresa?",
-      okText: "Excluir",
-      cancelText: "Cancelar",
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          const response = await fetch(`http://localhost:3001/empresa/${id}`, {
-            method: "DELETE"
-          })
-          if (response.ok) {
-            alert("Empresa excluída com sucesso!")
-            buscarEmpresas()
-          } else {
-            alert("Erro ao excluir empresa")
-          }
-        } catch (error) {
-          console.error("Erro ao excluir empresa:", error)
-          alert("Não foi possível conectar à API")
-        }
-      }
-    })
-  }
+  const selecionadas = empresas.filter(e => e.selecionada)
 
-  async function salvarEmpresa(e) {
-    e.preventDefault()
-
-    try {
-      const response = await fetch("http://localhost:3001/empresa", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(form)
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        alert("Empresa salva com sucesso!")
-        setForm({ empresa_nome: "" })
-        buscarEmpresas()
-      } else {
-        alert("Erro ao salvar empresa: " + data.error)
-      }
-    } catch (error) {
-      console.error("Erro ao salvar empresa:", error)
-      alert("Não foi possível conectar à API")
-    }
+  function abrirModalCadastro() {
+    setModoEdicao(false)
+    setEmpresaEdicao(null)
+    setNomeEditando("")
+    setModalAberto(true)
   }
 
   function abrirModalEdicao(empresa) {
+    setModoEdicao(true)
     setEmpresaEdicao(empresa)
     setNomeEditando(empresa.empresa_nome)
     setModalAberto(true)
   }
 
+  function handleInserirClick(e) {
+    e.preventDefault()
+    if (selecionadas.length === 1) {
+      abrirModalEdicao(selecionadas[0])
+    } else {
+      abrirModalCadastro()
+    }
+  }
+
   function fecharModalEdicao() {
     setModalAberto(false)
+    setModoEdicao(false)
     setEmpresaEdicao(null)
     setNomeEditando("")
+    setForm({ empresa_nome: "" })
   }
 
   async function salvarEdicao() {
     if (!nomeEditando || nomeEditando.trim() === "") {
-      alert("O nome da empresa não pode estar vazio.")
+      message.warning("O nome da empresa não pode estar vazio.")
       return
     }
 
     setSalvandoEdicao(true)
     try {
-      const response = await fetch(`http://localhost:3001/empresa/${empresaEdicao.empresa_codigo}`, {
-        method: "PUT",
+      const url = modoEdicao
+        ? `http://localhost:3001/empresa/${empresaEdicao.empresa_codigo}`
+        : "http://localhost:3001/empresa"
+      const method = modoEdicao ? "PUT" : "POST"
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json"
         },
@@ -140,38 +115,61 @@ export default function CadastroEmpresa() {
       const data = await response.json()
 
       if (response.ok) {
-        alert("Empresa atualizada com sucesso!")
+        message.success(modoEdicao ? "Empresa atualizada com sucesso!" : "Empresa cadastrada com sucesso!")
         fecharModalEdicao()
         buscarEmpresas()
       } else {
-        alert("Erro ao atualizar empresa: " + data.error)
+        message.error((modoEdicao ? "Erro ao atualizar empresa: " : "Erro ao cadastrar empresa: ") + data.error)
       }
     } catch (error) {
-      console.error("Erro ao atualizar empresa:", error)
-      alert("Não foi possível conectar à API")
+      console.error("Erro ao salvar empresa:", error)
+      message.error("Não foi possível conectar à API")
     } finally {
       setSalvandoEdicao(false)
     }
   }
 
-  return (
-    <form className="formulario" onSubmit={salvarEmpresa}>
+  const [empresasParaExcluir, setEmpresasParaExcluir] = useState([])
 
-      <h1>Cadastro Empresa</h1>
+  function abrirModalExcluirDoEdicao() {
+    if (!empresaEdicao) return
+    setEmpresasParaExcluir([empresaEdicao])
+    setModalExcluirAberto(true)
+  }
+
+  function fecharModalExcluir() {
+    setModalExcluirAberto(false)
+  }
+
+  async function confirmarExclusaoLote() {
+    setExcluindo(true)
+    try {
+      await Promise.all(
+        empresasParaExcluir.map(empresa =>
+          fetch(`http://localhost:3001/empresa/${empresa.empresa_codigo}`, {
+            method: "DELETE"
+          })
+        )
+      )
+      message.success("Empresa(s) excluída(s) com sucesso!")
+      fecharModalExcluir()
+      fecharModalEdicao()
+      buscarEmpresas()
+    } catch (error) {
+      console.error("Erro ao excluir empresas:", error)
+      message.error("Não foi possível conectar à API")
+    } finally {
+      setExcluindo(false)
+    }
+  }
+
+  return (
+    <form className="formulario" onSubmit={handleInserirClick}>
 
       {/* Empresa */}
-      <h2>Empresa</h2>
+      <h2>Cadastro Empresa</h2>
+
       <div className="grupo">
-        <div className="campo">
-          <label>Nome Empresa</label>
-          <input
-            type="text"
-            name="empresa_nome"
-            value={form.empresa_nome}
-            onChange={handleChange}
-            placeholder="Nome da Empresa"
-          />
-        </div>
         <div className="campo">
           <label>Buscar Empresa</label>
           <div className="search-wrapper">
@@ -182,12 +180,9 @@ export default function CadastroEmpresa() {
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar Empresa..."
             />
+            <button type="submit" className="inserir">Inserir</button>
           </div>
         </div>
-      </div>
-
-      <div className="botoes">
-        <button type="submit" className="salvar">Salvar</button>
       </div>
 
       {/* Listagem de empresas */}
@@ -199,8 +194,7 @@ export default function CadastroEmpresa() {
             value={tamanhoPagina}
             onChange={handleTamanhoPaginaChange}
             options={[
-              { value: 4, label: "4" },
-              { value: 10, label: "10" },
+              { value: 11, label: "12" },
               { value: 20, label: "20" },
               { value: 50, label: "50" },
               { value: 100, label: "100" },
@@ -210,44 +204,37 @@ export default function CadastroEmpresa() {
         </div>
       </div>
 
+      {/* Lista de empresas */}
       <div className="lista-empresas">
         <table>
           <thead>
             <tr>
-              <th>Código</th>
-              <th>Nome</th>
-              <th>Ações</th>
+              <th scope="col">Código</th>
+              <th scope="col">Nome</th>
             </tr>
           </thead>
           <tbody>
-            {carregando && (
+            {carregando ? (
               <tr>
-                <td colSpan="3" className="vazio">Carregando...</td>
+                <td colSpan={2} className="vazio">Carregando...</td>
               </tr>
-            )}
-
-            {!carregando && empresas.length === 0 && (
+            ) : empresas.length === 0 ? (
               <tr>
-                <td colSpan="3" className="vazio">Nenhuma empresa cadastrada</td>
+                <td colSpan={2} className="vazio">Nenhuma empresa cadastrada</td>
               </tr>
+            ) : (
+              empresas.map((empresa) => (
+                <tr
+                  onClick={() => toggleSelecao(empresa.empresa_codigo)}
+                  onDoubleClick={() => abrirModalEdicao(empresa)}
+                  className={`empresa-row${empresa.selecionada ? " selecionada" : ""}`}
+                  key={String(empresa.empresa_codigo)}
+                >
+                  <td className="codigo">{empresa.empresa_codigo}</td>
+                  <td>{empresa.empresa_nome}</td>
+                </tr>
+              ))
             )}
-
-            {!carregando && empresas.map((empresa) => (
-              <tr className="empresa-row" key={empresa.empresa_codigo}>
-                <td className="codigo">{empresa.empresa_codigo}</td>
-                <td>{empresa.empresa_nome}</td>
-                <td>
-                  <div className="acoes">
-                    <button type="button" className="btn-primary" onClick={() => abrirModalEdicao(empresa)}>
-                      Editar
-                    </button>
-                    <button type="button" className="btn-danger" onClick={() => deletarEmpresa(empresa.empresa_codigo)}>
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
           </tbody>
         </table>
 
@@ -272,15 +259,32 @@ export default function CadastroEmpresa() {
         </div>
       </div>
 
-      {/* Modal de edição */}
+      {/* Modal de cadastro/edição */}
       <Modal
-        title="Editar Empresa"
+        title={modoEdicao ? "Editar Empresa" : "Cadastrar Empresa"}
         open={modalAberto}
         onCancel={fecharModalEdicao}
         onOk={salvarEdicao}
-        okText="Salvar"
+        okText={salvandoEdicao ? "Salvando..." : "Salvar"}
         cancelText="Cancelar"
         confirmLoading={salvandoEdicao}
+        footer={(_, { CancelBtn, OkBtn }) => (
+          <div style={{ display: "flex", justifyContent: modoEdicao ? "space-between" : "flex-end", alignItems: "center" }}>
+            {modoEdicao && (
+              <button
+                type="button"
+                className="excluir"
+                onClick={abrirModalExcluirDoEdicao}
+              >
+                Excluir
+              </button>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <CancelBtn />
+              <OkBtn />
+            </div>
+          </div>
+        )}
       >
         <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 5 }}>
           Nome Empresa
@@ -289,7 +293,22 @@ export default function CadastroEmpresa() {
           value={nomeEditando}
           onChange={(e) => setNomeEditando(e.target.value)}
           placeholder="Nome da Empresa"
+          onPressEnter={salvarEdicao}
         />
+      </Modal>
+
+      {/* Modal de confirmação de exclusão em lote */}
+      <Modal
+        title="Confirmação"
+        open={modalExcluirAberto}
+        onCancel={fecharModalExcluir}
+        onOk={confirmarExclusaoLote}
+        okText="Excluir"
+        cancelText="Cancelar"
+        confirmLoading={excluindo}
+        okButtonProps={{ danger: true }}
+      >
+        <p>Tem certeza que deseja excluir esta empresa?</p>
       </Modal>
 
     </form>

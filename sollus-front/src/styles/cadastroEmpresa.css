@@ -9,13 +9,6 @@ body {
   font-family: sans-serif;
 }
 
-.formulario h1 {
-  font-size: 22px;
-  font-weight: 700;
-  color: #111;
-  margin-bottom: 24px;
-}
-
 .formulario h2 {
   font-size: 15px;
   font-weight: 700;
@@ -44,15 +37,18 @@ body {
   width: 260px;
 }
 
+.campo:has(.search-wrapper) {
+  width: 100%;
+  max-width: 340px;
+}
+
 .campo label {
   font-size: 12px;
   color: #555;
 }
 
-.campo input[type="text"],
-.campo input[type="date"],
-.campo select {
-  height: 36px;
+.campo input[type="text"] {
+  height: 30px;
   border: 1px solid #cdd3de;
   border-radius: 6px;
   padding: 0 10px;
@@ -63,46 +59,14 @@ body {
   width: 100%;
 }
 
-.campo input[type="text"]:focus,
-.campo input[type="date"]:focus,
-.campo select:focus {
+.campo input[type="text"]:focus {
   border-color: #3a7abf;
   box-shadow: 0 0 0 2px rgba(58, 122, 191, 0.12);
 }
 
-/* Radio buttons */
-.campo-radio {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-top: 8px;
-  margin-bottom: 4px;
-}
-
-.campo-radio label {
-  font-size: 14px;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.campo-radio input[type="radio"] {
-  accent-color: #2d6a2d;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
 /* Botões */
-.botoes {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-}
 
-.botoes .salvar {
+.inserir {
   padding: 0 20px;
   height: 30px;
   background: #2d6a2d;
@@ -112,32 +76,51 @@ body {
   border: none;
   border-radius: 7px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.botoes .salvar:hover {
+.inserir:hover {
   background: #255525;
 }
 
-.botoes .salvar:disabled {
+.inserir:disabled {
   background: #7aab7a;
   cursor: not-allowed;
 }
 
-/* Erro de validação */
-.erro {
-  font-size: 12px;
-  color: #c0392b;
-  margin-top: 2px;
+.excluir {
+  padding: 0 20px;
+  height: 30px;
+  background: #dd0000;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.excluir:hover {
+  background: #b30000;
+}
+
+.excluir:disabled {
+  background: #ff4747;
+  cursor: not-allowed;
 }
 
 /* Search */
 .search-wrapper {
-  position: relative;
-  width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .search-wrapper input {
-  width: 100%;
+  flex: 1 1 auto;
+  width: auto;
   height: 34px;
   border: 1px solid #cdd3de;
   border-radius: 6px;
@@ -169,7 +152,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 24px 0 12px;
+  margin: 12px 0 12px;
 }
 
 .lista-header-controle h2 {
@@ -193,16 +176,15 @@ body {
   overflow-x: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 .lista-empresas table {
-  text-align: center;
+  text-align: right;
   width: 100%;
   margin: 0 auto;
   border-collapse: collapse;
   font-size: 13px;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .lista-empresas thead tr {
@@ -210,8 +192,8 @@ body {
 }
 
 .lista-empresas th {
-  text-align: center;
-  padding: 10px 14px;
+  text-align: right;
+  padding: 5px 14px;
   font-size: 12px;
   font-weight: 600;
   color: #000000;
@@ -219,7 +201,8 @@ body {
 }
 
 .lista-empresas td {
-  padding: 10px 14px;
+  text-align: right;
+  padding: 5px 14px;
   color: #222;
   border-bottom: 1px solid #edf0f5;
 }
@@ -234,21 +217,18 @@ body {
 
 .lista-empresas th:nth-child(1),
 .lista-empresas td:nth-child(1) {
-  width: 150px;
+  width: 10px;
+  min-width: 10px;
+  max-width: 10px;
+  text-align: center;
 }
 
-.lista-empresas th:nth-child(2) {
-  width: 160px; /* Nome da empresa */
-}
-
+.lista-empresas th:nth-child(2),
 .lista-empresas td:nth-child(2) {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   text-align: left;
-  padding-left: 20px;
-}
-
-.lista-empresas th:nth-child(3),
-.lista-empresas td:nth-child(3) {
-  width: 140px; /* Ações */
 }
 
 .lista-empresas .vazio {
@@ -265,41 +245,11 @@ body {
 }
 
 .empresa-row td {
-  text-align: center;
+  text-align: right;
 }
 
-.acoes {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-}
-
-.btn-primary {
-  background-color: #2d6a2d;
-  color: #fff;
-  border: none;
-  padding: 7px 14px;
-  font-size: 13px;
-  border-radius: 4px;
-}
-
-.btn-primary:hover {
-  background-color: #255525;
-  border-color: #255525;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  border: none;
-  color: #fff;
-  padding: 7px 14px;
-  font-size: 13px;
-  border-radius: 4px;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-  border-color: #c82333;
+.empresa-row.selecionada {
+  background-color: #008cff;
 }
 
 /* Paginação */
