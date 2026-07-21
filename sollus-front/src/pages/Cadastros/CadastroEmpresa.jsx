@@ -194,7 +194,7 @@ export default function CadastroEmpresa() {
             value={tamanhoPagina}
             onChange={handleTamanhoPaginaChange}
             options={[
-              { value: 11, label: "12" },
+              { value: 12, label: "12" },
               { value: 20, label: "20" },
               { value: 50, label: "50" },
               { value: 100, label: "100" },

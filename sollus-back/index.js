@@ -19,7 +19,7 @@ app.get("/", (req, res) => {
 
 app.use("/empresa", empresaRoutes)
 app.use("/pessoa", pessoaRoutes)
-app.use("/unidade-negocio", uniNegocioRoutes)  // 👈 novo
+app.use("/uni-negocio", uniNegocioRoutes)
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`)
