@@ -36,10 +36,14 @@ export default function CadastroTipoCusto() {
                     <input type="text" name="idcarteira" value={form.idcarteira} onChange={handleChange} />
                 </div>
                 <div className="campo">
+
+                    /* perguntar qual tipo do custo */
                     <label>Nome Tipo Custo</label>
                     <input type="text" name="nomeTipoCusto" value={form.nomeTipoCusto} onChange={handleChange} />
                 </div>
                 <div className="campo">
+
+                    /* criar  */
                     <label>Nome Centro Custo</label>
                     <input type="text" name="nomeCentroCusto" value={form.nomeCentroCusto} onChange={handleChange} />
                 </div>
@@ -47,6 +51,8 @@ export default function CadastroTipoCusto() {
 
             {/* Saída Real */}
             <h2>Saída Real</h2>
+
+            /* guardar esse log para de informação log*/
             <div className="campo-radio">
                 <label>
                     <input type="radio" name="saidaReal" value="sim" checked={form.saidaReal === "sim"} onChange={handleChange} />
