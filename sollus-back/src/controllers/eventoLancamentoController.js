@@ -1,10 +1,30 @@
 const pool = require("../config/database")
 
-// Listar todos
+// Listar todos (paginado, com busca opcional)
 const getAll = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM evento_lancamento ORDER BY evento_lancamento_codigo")
-    res.json(result.rows)
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 5
+    const offset = (page - 1) * limit
+    const busca = req.query.busca || ""
+
+    const totalResult = await pool.query(
+      "SELECT COUNT(*) FROM evento_lancamento WHERE evento_lancamento_nome ILIKE $1",
+      [`%${busca}%`]
+    )
+    const total = parseInt(totalResult.rows[0].count)
+
+    const result = await pool.query(
+      "SELECT * FROM evento_lancamento WHERE evento_lancamento_nome ILIKE $1 ORDER BY evento_lancamento_codigo LIMIT $2 OFFSET $3",
+      [`%${busca}%`, limit, offset]
+    )
+
+    res.json({
+      dados: result.rows,
+      total,
+      paginaAtual: page,
+      totalPaginas: Math.ceil(total / limit) || 1
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -14,7 +34,7 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("SELECT * FROM evento_lancamento WHERE evento_lancamento_codigo = $1 AND evento_lancamento_nome = $2", [id, req.body.evento_lancamento_nome])
+    const result = await pool.query("SELECT * FROM evento_lancamento WHERE evento_lancamento_codigo = $1", [id])
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
   } catch (error) {
@@ -25,11 +45,19 @@ const getById = async (req, res) => {
 // Criar
 const create = async (req, res) => {
   try {
-    const { evento_lancamento_codigo, evento_lancamento_nome } = req.body
+    const { evento_lancamento_nome } = req.body
+
+    if (!evento_lancamento_nome || evento_lancamento_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da evento_lancamento é obrigatório.' })
+    }
+
+    const nomeFormatado = evento_lancamento_nome.trim().toUpperCase()
+
     const result = await pool.query(
-      "INSERT INTO evento_lancamento (evento_lancamento_codigo, evento_lancamento_nome) VALUES ($1, $2) RETURNING *",
-      [evento_lancamento_codigo, evento_lancamento_nome]
+      "INSERT INTO evento_lancamento (evento_lancamento_nome) VALUES ($1) RETURNING *",
+      [nomeFormatado]
     )
+
     res.status(201).json(result.rows[0])
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -40,10 +68,17 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { evento_lancamento_codigo, evento_lancamento_nome } = req.body
+    const { evento_lancamento_nome } = req.body
+
+    if (!evento_lancamento_nome || evento_lancamento_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da evento_lancamento é obrigatório.' })
+    }
+
+    const nomeFormatado = evento_lancamento_nome.trim().toUpperCase()
+
     const result = await pool.query(
-      "UPDATE evento_lancamento SET evento_lancamento_codigo = $1, evento_lancamento_nome = $2 WHERE evento_lancamento_codigo = $3 RETURNING *",
-      [evento_lancamento_codigo, evento_lancamento_nome, id]
+      "UPDATE evento_lancamento SET evento_lancamento_nome = $1 WHERE evento_lancamento_codigo = $2 RETURNING *",
+      [nomeFormatado, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
@@ -56,7 +91,10 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("DELETE FROM evento_lancamento WHERE evento_lancamento_codigo = $1 RETURNING *", [id])
+    const result = await pool.query(
+      "DELETE FROM evento_lancamento WHERE evento_lancamento_codigo = $1 RETURNING *",
+      [id]
+    )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json({ message: "Deletado com sucesso" })
   } catch (error) {

@@ -1,10 +1,30 @@
 const pool = require("../config/database")
 
-// Listar todos
+// Listar todos (paginado, com busca opcional)
 const getAll = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM item ORDER BY item_codigo")
-    res.json(result.rows)
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 5
+    const offset = (page - 1) * limit
+    const busca = req.query.busca || ""
+
+    const totalResult = await pool.query(
+      "SELECT COUNT(*) FROM item WHERE item_nome ILIKE $1",
+      [`%${busca}%`]
+    )
+    const total = parseInt(totalResult.rows[0].count)
+
+    const result = await pool.query(
+      "SELECT * FROM item WHERE item_nome ILIKE $1 ORDER BY item_codigo LIMIT $2 OFFSET $3",
+      [`%${busca}%`, limit, offset]
+    )
+
+    res.json({
+      dados: result.rows,
+      total,
+      paginaAtual: page,
+      totalPaginas: Math.ceil(total / limit) || 1
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -14,7 +34,7 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("SELECT * FROM item WHERE item_codigo = $1 AND item_nome = $2", [id, req.body.item_nome])
+    const result = await pool.query("SELECT * FROM item WHERE item_codigo = $1", [id])
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
   } catch (error) {
@@ -25,11 +45,19 @@ const getById = async (req, res) => {
 // Criar
 const create = async (req, res) => {
   try {
-    const { item_codigo, item_nome } = req.body
+    const { item_nome } = req.body
+
+    if (!item_nome || item_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da item é obrigatório.' })
+    }
+
+    const nomeFormatado = item_nome.trim().toUpperCase()
+
     const result = await pool.query(
-      "INSERT INTO item (item_codigo, item_nome) VALUES ($1, $2) RETURNING *",
-      [item_codigo, item_nome]
+      "INSERT INTO item (item_nome) VALUES ($1) RETURNING *",
+      [nomeFormatado]
     )
+
     res.status(201).json(result.rows[0])
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -40,10 +68,17 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { item_codigo, item_nome, item_und, categoria_codigo } = req.body
+    const { item_nome } = req.body
+
+    if (!item_nome || item_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da item é obrigatório.' })
+    }
+
+    const nomeFormatado = item_nome.trim().toUpperCase()
+
     const result = await pool.query(
-      "UPDATE item SET item_codigo = $1, item_nome = $2, item_und = $3, categoria_codigo = $4 WHERE item_codigo = $5 RETURNING *",
-      [item_codigo, item_nome, item_und, categoria_codigo, id]
+      "UPDATE item SET item_nome = $1 WHERE item_codigo = $2 RETURNING *",
+      [nomeFormatado, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
@@ -56,7 +91,10 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("DELETE FROM item WHERE item_codigo = $1 RETURNING *", [id])
+    const result = await pool.query(
+      "DELETE FROM item WHERE item_codigo = $1 RETURNING *",
+      [id]
+    )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json({ message: "Deletado com sucesso" })
   } catch (error) {
