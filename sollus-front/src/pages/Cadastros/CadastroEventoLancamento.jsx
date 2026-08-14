@@ -287,12 +287,12 @@ export default function CadastroEventoLancamento() {
         )}
       >
         <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 5 }}>
-          Nome Categoria
+          Nome do Evento de Lançamento
         </label>
         <Input
           value={nomeEditando}
           onChange={(e) => setNomeEditando(e.target.value)}
-          placeholder="Nome da Categoria"
+          placeholder="Nome do evento de lançamento"
           onPressEnter={salvarEdicao}
         />
       </Modal>
