@@ -225,13 +225,13 @@ export default function CadastroCategoria() {
             ) : (
               categorias.map((categoria) => (
                 <tr
-                  onClick={() => toggleSelecao(categoria.categoria_lancamento_codigo)}
+                  onClick={() => toggleSelecao(categoria.categoria_codigo)}
                   onDoubleClick={() => abrirModalEdicao(categoria)}
                   className={`empresa-row${categoria.selecionado ? " selecionado" : ""}`}
-                  key={String(categoria.categoria_lancamento_codigo)}
+                  key={String(categoria.categoria_codigo)}
                 >
-                  <td className="codigo">{categoria.categoria_lancamento_codigo}</td>
-                  <td>{categoria.categoria_lancamento_nome}</td>
+                  <td className="codigo">{categoria.categoria_codigo}</td>
+                  <td>{categoria.categoria_nome}</td>
                 </tr>
               ))
             )}
@@ -261,7 +261,7 @@ export default function CadastroCategoria() {
 
       {/* Modal de cadastro/edição */}
       <Modal
-        title={modoEdicao ? "Editar Evento de Lançamento" : "Cadastrar Evento de Lançamento"}
+        title={modoEdicao ? "Editar Categoria" : "Cadastrar Categoria"}
         open={modalAberto}
         onCancel={fecharModalEdicao}
         onOk={salvarEdicao}
