@@ -9,9 +9,7 @@ const centroCustoRoutes = require("./src/routes/centroCustoRoutes")
 const tipoLancamentoRoutes = require("./src/routes/tipoLancamentoRoutes")
 const origemLancamentoRoutes = require("./src/routes/origemLancamentoRoutes")
 const carteiraRoutes = require("./src/routes/carteiraRoutes")
-const categoriaRoutes = require("./src/routes/categoriaRoutes")
-const itemRoutes = require("./src/routes/itemRoutes")
-const eventoLancamentoRoutes = require("./src/routes/eventoLancamentoRoutes")
+const tipoCustoRoutes = require("./src/routes/tipoCustoRoutes")
 
 const app = express()
 
@@ -31,9 +29,7 @@ app.use("/centro-custo", centroCustoRoutes)
 app.use("/tipo-lancamento", tipoLancamentoRoutes)
 app.use("/origem-lancamento", origemLancamentoRoutes)
 app.use("/carteira", carteiraRoutes)
-app.use("/categoria", categoriaRoutes)
-app.use("/item", itemRoutes)
-app.use("/evento-lancamento", eventoLancamentoRoutes)
+app.use("/tipo-custo", tipoCustoRoutes)
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`)

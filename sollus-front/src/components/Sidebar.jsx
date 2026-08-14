@@ -35,9 +35,9 @@ export default function Sidebar() {
       children: [
 
         {
-          key: "/cadastro/uni-negocio",
-          icon: <ShopOutlined />,
-          label: "Uni. Negócio"
+          key: "/cadastro/pessoa",
+          icon: <UserOutlined />,
+          label: "Pessoa"
         },
 
         {
@@ -47,9 +47,15 @@ export default function Sidebar() {
         },
 
         {
-          key: "/cadastro/pessoa",
-          icon: <UserOutlined />,
-          label: "Pessoa"
+          key: "/cadastro/uni-negocio",
+          icon: <ShopOutlined />,
+          label: "Uni. Negócio"
+        },
+
+        {
+          key: "/cadastro/carteira",
+          icon: <WalletOutlined />,
+          label: "Carteira"
         },
 
         {
@@ -92,12 +98,6 @@ export default function Sidebar() {
           key: "/cadastro/item",
           icon: <UnorderedListOutlined />,
           label: "Item"
-        },
-
-        {
-          key: "/cadastro/carteira",
-          icon: <WalletOutlined />,
-          label: "Carteira"
         }
 
       ]
@@ -118,7 +118,7 @@ export default function Sidebar() {
     }}>
 
       <h2 className="sidebar-logo">Sollus</h2>
-      
+
       <Menu
         theme="dark"
         mode="inline"

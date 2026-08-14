@@ -1,7 +1,8 @@
 const express = require("express")
 const router = express.Router()
-const { getAll, getById, create, update, remove } = require("../controllers/centroCustoController")
+const { getAll, getAllSimples, getById, create, update, remove } = require("../controllers/centroCustoController")
 
+router.get("/simples", getAllSimples)
 router.get("/", getAll)
 router.get("/:id", getById)
 router.post("/", create)
