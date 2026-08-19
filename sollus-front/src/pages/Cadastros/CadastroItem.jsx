@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
-import "../../styles/cadastroEmpresa.css"
+import "../../styles/cadastroItem.css"
 
 export default function CadastroItem() {
 

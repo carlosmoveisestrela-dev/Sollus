@@ -22,7 +22,6 @@ body {
   margin-top: 0;
 }
 
-/* Grid de campos: 2 por linha por padrão */
 .grupo {
   display: flex;
   gap: 16px;
@@ -63,8 +62,6 @@ body {
   border-color: #3a7abf;
   box-shadow: 0 0 0 2px rgba(58, 122, 191, 0.12);
 }
-
-/* Botões */
 
 .inserir {
   padding: 0 20px;
@@ -110,7 +107,6 @@ body {
   cursor: not-allowed;
 }
 
-/* Search */
 .search-wrapper {
   display: flex;
   align-items: center;
@@ -147,7 +143,6 @@ body {
   pointer-events: none;
 }
 
-/* Cabeçalho da lista com seletor de itens por página */
 .lista-header-controle {
   display: flex;
   align-items: center;
@@ -171,7 +166,6 @@ body {
   color: #555;
 }
 
-/* Tabela */
 .lista-empresas {
   overflow-x: auto;
   display: flex;
@@ -179,12 +173,11 @@ body {
 }
 
 .lista-empresas table {
-  text-align: right;
   width: 100%;
   margin: 0 auto;
   border-collapse: collapse;
   font-size: 13px;
-  table-layout: auto;
+  table-layout: fixed;
 }
 
 .lista-empresas thead tr {
@@ -192,19 +185,25 @@ body {
 }
 
 .lista-empresas th {
-  text-align: right;
-  padding: 3px 14px;
+  text-align: left;
+  padding: 3px 24px 3px 14px;
   font-size: 12px;
   font-weight: 600;
   color: #000000;
   border-bottom: 1.5px solid #b3b3b3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lista-empresas td {
-  text-align: right;
-  padding: 5px 14px;
+  text-align: left;
+  padding: 5px 24px 5px 14px;
   color: #222;
   border-bottom: 1px solid #edf0f5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lista-empresas tbody tr:hover {
@@ -217,19 +216,10 @@ body {
 
 .lista-empresas th:nth-child(1),
 .lista-empresas td:nth-child(1) {
-  width: 10px;
-  min-width: 10px;
-  max-width: 10px;
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
   text-align: center;
-  padding-right: 8px;
-}
-
-.lista-empresas th:nth-child(2),
-.lista-empresas td:nth-child(2) {
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  text-align: left;
   padding-right: 8px;
 }
 
@@ -243,18 +233,8 @@ body {
 .lista-empresas .codigo {
   font-weight: 600;
   color: #000000;
-  width: 100px;
 }
 
-.empresa-row td {
-  text-align: right;
-}
-
-.empresa-row.selecionada {
-  background-color: #008cff;
-}
-
-/* Paginação */
 .paginacao {
   display: flex;
   align-items: center;

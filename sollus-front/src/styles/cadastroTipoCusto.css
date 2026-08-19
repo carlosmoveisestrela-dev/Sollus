@@ -230,36 +230,6 @@ body {
   padding-right: 8px;
 }
 
-/* Colunas de Nome: mais largas, alinhadas à esquerda,
-   com padding-right maior para separar do próximo grupo Código/Nome */
-.lista-empresas th:nth-child(2),
-.lista-empresas td:nth-child(2),
-.lista-empresas th:nth-child(4),
-.lista-empresas td:nth-child(4) {
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
-  text-align: left;
-  padding-left: 8px;
-  padding-right: 32px;
-}
-
-.lista-empresas th:nth-child(6),
-.lista-empresas td:nth-child(6) {
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
-  text-align: left;
-  padding-left: 8px;
-}
-
-.lista-empresas th:nth-child(7),
-.lista-empresas td:nth-child(7) {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
-  text-align: center;
-}
 
 .lista-empresas .vazio {
   text-align: center;
