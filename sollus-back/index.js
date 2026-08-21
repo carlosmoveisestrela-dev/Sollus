@@ -13,6 +13,7 @@ const tipoCustoRoutes = require("./src/routes/tipoCustoRoutes")
 const itemRoutes = require("./src/routes/itemRoutes")
 const categoriaRoutes = require("./src/routes/categoriaRoutes")
 const eventoLancamentoRoutes = require("./src/routes/eventoLancamentoRoutes")
+const movimentoFinRoutes = require("./src/routes/movimentoFinRoutes")
 
 const app = express()
 
@@ -36,6 +37,7 @@ app.use("/tipo-custo", tipoCustoRoutes)
 app.use("/item", itemRoutes)
 app.use("/categoria", categoriaRoutes)
 app.use("/evento-lancamento", eventoLancamentoRoutes)
+app.use("/movimentofin", movimentoFinRoutes)
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`)

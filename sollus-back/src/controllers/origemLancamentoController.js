@@ -34,7 +34,10 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("SELECT * FROM origem_lancamento WHERE origem_lancamento_codigo = $1 AND origem_lancamento_nome = $2", [id, req.body.origem_lancamento_nome])
+    const result = await pool.query(
+      "SELECT * FROM origem_lancamento WHERE origem_lancamento_codigo = $1",
+      [id]
+    )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
   } catch (error) {
