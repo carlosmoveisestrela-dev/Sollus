@@ -1,4 +1,4 @@
-const pool = require("../config/database")
+const pool = require("../../config/database")
 
 // Listar todos (paginado, com nome do centro de custo e da carteira via JOIN)
 const getAll = async (req, res) => {

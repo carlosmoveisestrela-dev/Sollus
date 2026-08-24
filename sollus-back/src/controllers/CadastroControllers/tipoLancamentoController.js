@@ -1,4 +1,4 @@
-const pool = require("../config/database")
+const pool = require("../../config/database")
 
 // Listar todos (paginado, com busca opcional)
 const getAll = async (req, res) => {

@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { getAll, getById, create, update, remove } = require("../controllers/empresaController")
+const { getAll, getById, create, update, remove } = require("../../controllers/CadastroControllers/itemController")
 
 router.get("/", getAll)
 router.get("/:id", getById)

@@ -10,7 +10,6 @@ const camposObrigatorios = [
   "duplicata",
   "dt_emissao",
   "dt_vencimento",
-  "dt_pagamento",
 ]
 
 function validarCampos(body) {
@@ -112,7 +111,7 @@ const create = async (req, res) => {
         duplicata,
         dt_emissao,
         dt_vencimento,
-        dt_pagamento,
+        dt_pagamento || null,
       ]
     )
 
@@ -163,7 +162,7 @@ const update = async (req, res) => {
         duplicata,
         dt_emissao,
         dt_vencimento,
-        dt_pagamento,
+        dt_pagamento || null,
         id,
       ]
     )

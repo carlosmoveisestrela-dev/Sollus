@@ -97,8 +97,6 @@ export default function MovimentoFinanceiro() {
   const [salvandoEdicao, setSalvandoEdicao] = useState(false)
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
-
-  // Campos do formulário
   const [empresaSelecionada, setEmpresaSelecionada] = useState(null)
   const [pessoaSelecionada, setPessoaSelecionada] = useState(null)
   const [tipoLancamentoSelecionado, setTipoLancamentoSelecionado] = useState(null)
@@ -177,7 +175,7 @@ export default function MovimentoFinanceiro() {
     setTitulo(movimento.titulo ?? "")
     setDuplicata(movimento.duplicata ?? "")
     setDtEmissao(movimento.dt_emissao ? dayjs(movimento.dt_emissao) : null)
-    setDtVencimento(movimento.dt_vencimento ? dayjs(movimento.dt_vencimento) : null)
+    setDtVencimento(movimento.dt_vencimento ? dayjs(movimento.dt_vencimento) : null)    
     setDtPagamento(movimento.dt_pagamento ? dayjs(movimento.dt_pagamento) : null)
     setModalAberto(true)
   }
@@ -207,8 +205,8 @@ export default function MovimentoFinanceiro() {
       message.error("A Duplicata é obrigatória")
       return
     }
-    if (!dtEmissao || !dtVencimento || !dtPagamento) {
-      message.error("As datas de Emissão, Vencimento e Pagamento são obrigatórias")
+    if (!dtEmissao || !dtVencimento) {
+      message.error("As datas de Emissão e Vencimento são obrigatórias")
       return
     }
 
@@ -231,7 +229,7 @@ export default function MovimentoFinanceiro() {
           duplicata,
           dt_emissao: dtEmissao.format("YYYY-MM-DD"),
           dt_vencimento: dtVencimento.format("YYYY-MM-DD"),
-          dt_pagamento: dtPagamento.format("YYYY-MM-DD"),
+          dt_pagamento: dtPagamento ? dtPagamento.format("YYYY-MM-DD") : null,
         }),
       })
 
@@ -353,9 +351,9 @@ export default function MovimentoFinanceiro() {
                   key={String(mov.movimento_fin_codigo)}
                 >
                   <td className="codigo">{mov.movimento_fin_codigo}</td>
-                  <td>{mov.empresa_codigo}</td>
-                  <td>{mov.pessoa_codigo}</td>
-                  <td>{mov.tipo_lancamento_codigo}</td>
+                  <td>{mov.empresa_nome}</td>
+                  <td>{mov.pessoa_nome}</td>
+                  <td>{mov.tipo_lancamento_nome}</td>
                   <td>{mov.origem_lancamento_nome}</td>
                   <td>{mov.dt_lancamento ? dayjs(mov.dt_lancamento).format("DD/MM/YYYY HH:mm") : ""}</td>
                   <td>{mov.titulo}</td>

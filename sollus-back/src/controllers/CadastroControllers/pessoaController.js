@@ -1,6 +1,6 @@
-const pool = require("../config/database")
+const pool = require("../../config/database")
 
-// Listar todos (paginado, com busca opcional)
+// Listar todos
 const getAll = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1
@@ -9,17 +9,16 @@ const getAll = async (req, res) => {
     const busca = req.query.busca || ""
 
     const totalResult = await pool.query(
-      "SELECT COUNT(*) FROM uni_negocio WHERE und_neg_nome ILIKE $1",
+      "SELECT COUNT(*) FROM pessoa WHERE pessoa_nome ILIKE $1",
       [`%${busca}%`]
     )
-
     const total = parseInt(totalResult.rows[0].count)
 
     const result = await pool.query(
-      "SELECT * FROM uni_negocio WHERE und_neg_nome ILIKE $1 ORDER BY und_neg_codigo LIMIT $2 OFFSET $3",
+      "SELECT * FROM pessoa WHERE pessoa_nome ILIKE $1 ORDER BY pessoa_codigo LIMIT $2 OFFSET $3",
       [`%${busca}%`, limit, offset]
     )
-    
+
     res.json({
       dados: result.rows,
       total,
@@ -35,7 +34,7 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params
-    const result = await pool.query("SELECT * FROM uni_negocio WHERE und_neg_codigo = $1", [id])
+    const result = await pool.query("SELECT * FROM pessoa WHERE pessoa_codigo = $1", [id])
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
   } catch (error) {
@@ -43,21 +42,22 @@ const getById = async (req, res) => {
   }
 }
 
-// Criar
 const create = async (req, res) => {
   try {
-    const { und_neg_nome } = req.body
+    const { pessoa_nome, pessoa_contato_fone, pessoa_estado, pessoa_cidade } = req.body
 
-    if (!und_neg_nome || und_neg_nome.trim() === '') {
-      return res.status(400).json({ error: 'Nome da empresa é obrigatório.' })
+    if (!pessoa_nome || pessoa_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da pessoa é obrigatório.' })
     }
 
-    const nomeFormatado = und_neg_nome.trim().toUpperCase()
+    const nomeFormatado = pessoa_nome.trim().toUpperCase()
 
     const result = await pool.query(
-      "INSERT INTO uni_negocio (und_neg_nome) VALUES ($1) RETURNING *",
-      [nomeFormatado]
+      `INSERT INTO pessoa (pessoa_nome, pessoa_contato_fone, pessoa_estado, pessoa_cidade)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [nomeFormatado, pessoa_contato_fone || null, pessoa_estado || null, pessoa_cidade || null]
     )
+
     res.status(201).json(result.rows[0])
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -68,17 +68,19 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { und_neg_codigo, und_neg_nome } = req.body
+    const { pessoa_nome, pessoa_contato_fone, pessoa_estado, pessoa_cidade } = req.body
 
-    if (!und_neg_nome || und_neg_nome.trim() === '') {
-      return res.status(400).json({ error: 'Nome da empresa é obrigatório.' })
+    if (!pessoa_nome || pessoa_nome.trim() === '') {
+      return res.status(400).json({ error: 'Nome da pessoa é obrigatório.' })
     }
 
-    const nomeFormtado = und_neg_nome.trim().toUpperCase()
+    const nomeFormatado = pessoa_nome.trim().toUpperCase()
 
     const result = await pool.query(
-      "UPDATE uni_negocio SET und_neg_nome = $1 WHERE und_neg_codigo = $2 RETURNING *",
-      [nomeFormtado, id]
+      `UPDATE pessoa
+       SET pessoa_nome = $1, pessoa_contato_fone = $2, pessoa_estado = $3, pessoa_cidade = $4
+       WHERE pessoa_codigo = $5 RETURNING *`,
+      [nomeFormatado, pessoa_contato_fone || null, pessoa_estado || null, pessoa_cidade || null, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
@@ -92,7 +94,7 @@ const remove = async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(
-      "DELETE FROM uni_negocio WHERE und_neg_codigo = $1 RETURNING *",
+      "DELETE FROM pessoa WHERE pessoa_codigo = $1 RETURNING *",
       [id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
