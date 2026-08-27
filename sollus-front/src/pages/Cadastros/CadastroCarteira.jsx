@@ -22,8 +22,8 @@ export default function CadastroTipoLancamento() {
   const [salvandoEdicao, setSalvandoEdicao] = useState(false)
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
-  
-    function handleChange(e) {
+
+  function handleChange(e) {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
   }
@@ -53,12 +53,15 @@ export default function CadastroTipoLancamento() {
 
   useEffect(() => {
     buscarCarteira()
-  }, [pagina, tamanhoPagina])
+  }, [pagina, tamanhoPagina, busca])
 
   useEffect(() => {
-    setPagina(1)
-    buscarCarteira()
-  }, [busca])
+    const delay = setTimeout(() => {
+      buscarCarteira()
+    }, 400)
+
+    return () => clearTimeout(delay)
+  }, [busca, pagina, tamanhoPagina])
 
   function handleTamanhoPaginaChange(valor) {
     setTamanhoPagina(valor)
@@ -130,7 +133,7 @@ export default function CadastroTipoLancamento() {
   }
 
   function abrirModalExcluirDoEdicao() {
-    if (!CarteriraEdicao) return
+    if (!carteiraEdicao) return
     setModalExcluirAberto(true)
   }
 
@@ -139,12 +142,13 @@ export default function CadastroTipoLancamento() {
   }
 
   async function confirmarExclusao() {
-    if (!CarteriraEdicao) return
+    if (!carteiraEdicao) return
     setExcluindo(true)
     try {
-      const response = await fetch(`http://localhost:3001/tipo-lancamento/${CarteriraEdicao.carteira_codigo}`, {
-        method: "DELETE"
-      })
+      const response = await fetch(
+        `http://localhost:3001/carteira/${carteiraEdicao.carteira_codigo}`,
+        { method: "DELETE" }
+      )
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
