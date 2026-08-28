@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Select, Modal, Input, InputNumber, message } from "antd"
-import Layout from "../../layouts/Layout";
+import Layout from "../layouts/Layout";
 import "../styles/lancamentoItem.css"
 
 const API_URL = import.meta.env.VITE_API_URL
