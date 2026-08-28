@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Select, Modal, Input, message } from "antd"
-import Layout from "../layouts/Layout"
+import Layout from "../../layouts/Layout";
 import "../../styles/cadastroPessoa.css"
 import { mascararCelular, celularValido, apenasNumeros } from "../../utils/telefone"
 

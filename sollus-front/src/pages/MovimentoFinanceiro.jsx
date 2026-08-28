@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Select, Modal, Input, DatePicker, message } from "antd"
 import dayjs from "dayjs"
-import Layout from "../layouts/Layout"
+import Layout from "../../layouts/Layout";
 import "../styles/movimentoFin.css"
 
 const API_URL = import.meta.env.VITE_API_URL
