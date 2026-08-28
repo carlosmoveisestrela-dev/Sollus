@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Select, Modal, Input, message } from "antd"
-import Layout from "../../layouts/layout.jsx"
+import Layout from "../layouts/Layout"
 import "../../styles/cadastroEmpresa.css"
 
 const API_URL = import.meta.env.VITE_API_URL

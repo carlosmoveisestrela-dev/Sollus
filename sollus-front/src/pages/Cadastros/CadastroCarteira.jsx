@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Layout from "../../layouts/layout";
+import Layout from "../../layouts/Layout";
 import "../../styles/cadastroEmpresa.css";
 import { message, Select, Modal, Input, Form } from "antd"
 
