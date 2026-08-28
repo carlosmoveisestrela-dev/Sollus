@@ -3,6 +3,8 @@ import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroEmpresa.css"
 import { message, Select, Modal, Input } from "antd"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroCentroCusto() {
 
   const [busca, setBusca] = useState("")
@@ -25,7 +27,7 @@ export default function CadastroCentroCusto() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/centro-custo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/centro-custo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
 
@@ -47,7 +49,7 @@ export default function CadastroCentroCusto() {
   // Busca a lista de carteiras só quando o modal abre, para popular o select
   useEffect(() => {
     if (modalAberto) {
-      fetch("http://localhost:3001/carteira?limit=1000")
+      fetch(`${API_URL}/carteira?limit=1000`)
         .then((res) => res.json())
         .then((data) => setCarteiras(data.dados ?? []))
         .catch((error) => {
@@ -115,8 +117,8 @@ export default function CadastroCentroCusto() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/centro-custo/${centroCustoEdicao.centro_custo_codigo}`
-        : "http://localhost:3001/centro-custo"
+        ? `${API_URL}/centro-custo/${centroCustoEdicao.centro_custo_codigo}`
+        : `${API_URL}/centro-custo`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -160,7 +162,7 @@ export default function CadastroCentroCusto() {
     if (!centroCustoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`http://localhost:3001/centro-custo/${centroCustoEdicao.centro_custo_codigo}`, {
+      await fetch(`${API_URL}/centro-custo/${centroCustoEdicao.centro_custo_codigo}`, {
         method: "DELETE"
       })
       message.success("Centro de Custo excluído com sucesso!")

@@ -3,6 +3,8 @@ import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroItem.css"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroItem() {
 
   const [busca, setBusca] = useState("")
@@ -26,7 +28,7 @@ export default function CadastroItem() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/item?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/item?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
       setItens(data.dados ?? [])
@@ -43,7 +45,7 @@ export default function CadastroItem() {
   // Busca a lista de categorias só quando o modal abre, para popular o select
   useEffect(() => {
     if (modalAberto) {
-      fetch("http://localhost:3001/categoria?limit=1000")
+      fetch(`${API_URL}/categoria?limit=1000`)
         .then((res) => res.json())
         .then((data) => setCategorias(data.dados ?? []))
         .catch((error) => {
@@ -119,8 +121,8 @@ export default function CadastroItem() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/item/${itemEdicao.item_codigo}`
-        : "http://localhost:3001/item"
+        ? `${API_URL}/item/${itemEdicao.item_codigo}`
+        : `${API_URL}/item`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -165,7 +167,7 @@ export default function CadastroItem() {
     if (!itemEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`http://localhost:3001/item/${itemEdicao.item_codigo}`, {
+      await fetch(`${API_URL}/item/${itemEdicao.item_codigo}`, {
         method: "DELETE"
       })
       message.success("Item excluído com sucesso!")

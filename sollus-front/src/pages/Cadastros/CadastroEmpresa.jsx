@@ -3,6 +3,8 @@ import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroEmpresa.css"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroEmpresa() {
 
   const [form, setForm] = useState({
@@ -32,7 +34,7 @@ export default function CadastroEmpresa() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/empresa?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/empresa?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
       setEmpresas(data.dados)
@@ -100,8 +102,8 @@ export default function CadastroEmpresa() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/empresa/${empresaEdicao.empresa_codigo}`
-        : "http://localhost:3001/empresa"
+        ? `${API_URL}/empresa/${empresaEdicao.empresa_codigo}`
+        : `${API_URL}/empresa`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -146,7 +148,7 @@ export default function CadastroEmpresa() {
     try {
       await Promise.all(
         empresasParaExcluir.map(empresa =>
-          fetch(`http://localhost:3001/empresa/${empresa.empresa_codigo}`, {
+          fetch(`${API_URL}/empresa/${empresa.empresa_codigo}`, {
             method: "DELETE"
           })
         )

@@ -4,6 +4,8 @@ import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroPessoa.css"
 import { mascararCelular, celularValido, apenasNumeros } from "../../utils/telefone"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroPessoa() {
 
   const [buscar, setBuscar] = useState("")
@@ -32,7 +34,7 @@ export default function CadastroPessoa() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/pessoa?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(buscar)}`
+        `${API_URL}/pessoa?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(buscar)}`
       )
       const data = await response.json()
 
@@ -158,8 +160,8 @@ export default function CadastroPessoa() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/pessoa/${pessoaEdicao.pessoa_codigo}`
-        : "http://localhost:3001/pessoa"
+        ? `${API_URL}/pessoa/${pessoaEdicao.pessoa_codigo}`
+        : `${API_URL}/pessoa`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -205,7 +207,7 @@ export default function CadastroPessoa() {
     if (!pessoaEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`http://localhost:3001/pessoa/${pessoaEdicao.pessoa_codigo}`, {
+      await fetch(`${API_URL}/pessoa/${pessoaEdicao.pessoa_codigo}`, {
         method: "DELETE",
       })
       message.success("Pessoa excluída com sucesso")

@@ -3,6 +3,8 @@ import Layout from "../../layouts/layout";
 import "../../styles/cadastroEmpresa.css";
 import { message, Select, Modal, Input, Form } from "antd"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroOrigemLancamento() {
 
   const [form, setForm] = useState({
@@ -32,7 +34,7 @@ export default function CadastroOrigemLancamento() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/origem-lancamento?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/origem-lancamento?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
 
@@ -107,8 +109,8 @@ export default function CadastroOrigemLancamento() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/origem-lancamento/${lancamentoEdicao.origem_lancamento_codigo}`
-        : "http://localhost:3001/origem-lancamento"
+        ? `${API_URL}/origem-lancamento/${lancamentoEdicao.origem_lancamento_codigo}`
+        : `${API_URL}/origem-lancamento`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -153,7 +155,7 @@ export default function CadastroOrigemLancamento() {
     try {
       await Promise.all(
         empresasParaExcluir.map(origemLancamento =>
-          fetch(`http://localhost:3001/origem-lancamento/${origemLancamento.origem_lancamento_codigo}`, {
+          fetch(`${API_URL}/origem-lancamento/${origemLancamento.origem_lancamento_codigo}`, {
             method: "DELETE"
           })
         )

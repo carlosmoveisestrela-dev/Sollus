@@ -3,6 +3,8 @@ import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroEmpresa.css"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroEventoLancamento() {
 
   const [form, setForm] = useState({
@@ -32,7 +34,7 @@ export default function CadastroEventoLancamento() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/evento-lancamento?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/evento-lancamento?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
       setEventosLancamento(data.dados)
@@ -100,8 +102,8 @@ export default function CadastroEventoLancamento() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/evento-lancamento/${eventoEdicao.evento_lancamento_codigo}`
-        : "http://localhost:3001/evento-lancamento"
+        ? `${API_URL}/evento-lancamento/${eventoEdicao.evento_lancamento_codigo}`
+        : `${API_URL}/evento-lancamento`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -146,7 +148,7 @@ export default function CadastroEventoLancamento() {
     try {
       await Promise.all(
         itensParaExcluir.map(evento =>
-          fetch(`http://localhost:3001/evento-lancamento/${evento.evento_lancamento_codigo}`, {
+          fetch(`${API_URL}/evento-lancamento/${evento.evento_lancamento_codigo}`, {
             method: "DELETE"
           })
         )

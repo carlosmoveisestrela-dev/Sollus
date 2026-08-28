@@ -3,6 +3,8 @@ import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroEmpresa.css"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroCategoria() {
 
   const [form, setForm] = useState({
@@ -32,7 +34,7 @@ export default function CadastroCategoria() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/categoria?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/categoria?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
       setCategorias(data.dados)
@@ -100,8 +102,8 @@ export default function CadastroCategoria() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/categoria/${categoriaEdicao.categoria_codigo}`
-        : "http://localhost:3001/categoria"
+        ? `${API_URL}/categoria/${categoriaEdicao.categoria_codigo}`
+        : `${API_URL}/categoria`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -146,7 +148,7 @@ export default function CadastroCategoria() {
     try {
       await Promise.all(
         categoriasParaExcluir.map(categoria =>
-          fetch(`http://localhost:3001/categoria/${categoria.categoria_codigo}`, {
+          fetch(`${API_URL}/categoria/${categoria.categoria_codigo}`, {
             method: "DELETE"
           })
         )

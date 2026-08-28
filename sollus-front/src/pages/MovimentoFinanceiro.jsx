@@ -4,7 +4,7 @@ import dayjs from "dayjs"
 import Layout from "../layouts/layout.jsx"
 import "../styles/movimentoFin.css"
 
-const API_URL = "http://localhost:3001"
+const API_URL = import.meta.env.VITE_API_URL
 
 // Debounce simples para não disparar uma requisição a cada tecla digitada
 function useDebounce(callback, delay) {

@@ -3,6 +3,8 @@ import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroTipoCusto.css"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroTipoCusto() {
 
   const [buscar, setBuscar] = useState("")
@@ -27,7 +29,7 @@ export default function CadastroTipoCusto() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/tipo-custo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(buscar)}`
+        `${API_URL}/tipo-custo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(buscar)}`
       )
       const data = await response.json()
 
@@ -48,7 +50,7 @@ export default function CadastroTipoCusto() {
 
   useEffect(() => {
     if (modalAberto) {
-      fetch("http://localhost:3001/centro-custo/simples")
+      fetch(`${API_URL}/centro-custo/simples`)
         .then((res) => res.json())
         .then((data) => setCentroCustos(Array.isArray(data) ? data : []))
         .catch((error) => {
@@ -134,8 +136,8 @@ export default function CadastroTipoCusto() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`
-        : "http://localhost:3001/tipo-custo"
+        ? `${API_URL}/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`
+        : `${API_URL}/tipo-custo`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -181,7 +183,7 @@ export default function CadastroTipoCusto() {
     if (!tipoCustoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`http://localhost:3001/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`, {
+      await fetch(`${API_URL}/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`, {
         method: "DELETE",
       })
       message.success("Tipo de custo excluído com sucesso")

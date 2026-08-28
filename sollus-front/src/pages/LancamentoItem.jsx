@@ -3,7 +3,7 @@ import { Select, Modal, Input, InputNumber, message } from "antd"
 import Layout from "../layouts/layout.jsx"
 import "../styles/lancamentoItem.css"
 
-const API_URL = "http://localhost:3001"
+const API_URL = import.meta.env.VITE_API_URL
 
 // Debounce simples para não disparar uma requisição a cada tecla digitada
 function useDebounce(callback, delay) {

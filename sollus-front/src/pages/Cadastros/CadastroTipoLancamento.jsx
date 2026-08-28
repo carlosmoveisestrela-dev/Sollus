@@ -3,6 +3,8 @@ import Layout from "../../layouts/layout";
 import "../../styles/cadastroEmpresa.css";
 import { message, Select, Modal, Input, Form } from "antd"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroTipoLancamento() {
 
   const [form, setForm] = useState({
@@ -32,7 +34,7 @@ export default function CadastroTipoLancamento() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/tipo-lancamento?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/tipo-lancamento?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
 
@@ -100,8 +102,8 @@ export default function CadastroTipoLancamento() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/tipo-lancamento/${lancamentoEdicao.tipo_lancamento_codigo}`
-        : "http://localhost:3001/tipo-lancamento"
+        ? `${API_URL}/tipo-lancamento/${lancamentoEdicao.tipo_lancamento_codigo}`
+        : `${API_URL}/tipo-lancamento`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -142,7 +144,7 @@ export default function CadastroTipoLancamento() {
     if (!lancamentoEdicao) return
     setExcluindo(true)
     try {
-      const response = await fetch(`http://localhost:3001/tipo-lancamento/${lancamentoEdicao.tipo_lancamento_codigo}`, {
+      const response = await fetch(`${API_URL}/tipo-lancamento/${lancamentoEdicao.tipo_lancamento_codigo}`, {
         method: "DELETE"
       })
 

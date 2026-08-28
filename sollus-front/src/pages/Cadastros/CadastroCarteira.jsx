@@ -3,6 +3,8 @@ import Layout from "../../layouts/layout";
 import "../../styles/cadastroEmpresa.css";
 import { message, Select, Modal, Input, Form } from "antd"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroTipoLancamento() {
 
   const [form, setForm] = useState({
@@ -32,7 +34,7 @@ export default function CadastroTipoLancamento() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/carteira?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/carteira?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
 
@@ -103,8 +105,8 @@ export default function CadastroTipoLancamento() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/carteira/${carteiraEdicao.carteira_codigo}`
-        : "http://localhost:3001/carteira"
+        ? `${API_URL}/carteira/${carteiraEdicao.carteira_codigo}`
+        : `${API_URL}/carteira`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -146,7 +148,7 @@ export default function CadastroTipoLancamento() {
     setExcluindo(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/carteira/${carteiraEdicao.carteira_codigo}`,
+        `${API_URL}/carteira/${carteiraEdicao.carteira_codigo}`,
         { method: "DELETE" }
       )
 

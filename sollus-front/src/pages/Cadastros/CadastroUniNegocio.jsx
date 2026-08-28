@@ -3,6 +3,8 @@ import { Select, Modal, Input, message } from "antd"
 import Layout from "../../layouts/layout.jsx"
 import "../../styles/cadastroEmpresa.css"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function CadastroUniNegocio() {
 
   const [form, setForm] = useState({
@@ -33,7 +35,7 @@ export default function CadastroUniNegocio() {
     setCarregando(true)
     try {
       const response = await fetch(
-        `http://localhost:3001/uni-negocio?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+        `${API_URL}/uni-negocio?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
       setUniNegocios(data.dados)
@@ -100,8 +102,8 @@ export default function CadastroUniNegocio() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `http://localhost:3001/uni-negocio/${uniNegocioEdicao.und_neg_codigo}`
-        : "http://localhost:3001/uni-negocio"
+        ? `${API_URL}/uni-negocio/${uniNegocioEdicao.und_neg_codigo}`
+        : `${API_URL}/uni-negocio`
       const method = modoEdicao ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -153,7 +155,7 @@ export default function CadastroUniNegocio() {
     try {
       await Promise.all(
         undnegocioParaExcluir.map(uniNegocio =>
-          fetch(`http://localhost:3001/uni-negocio/${uniNegocio.und_neg_codigo}`, {
+          fetch(`${API_URL}/uni-negocio/${uniNegocio.und_neg_codigo}`, {
             method: "DELETE"
           })
         )
