@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Select, Modal, Input, InputNumber, message } from "antd"
+import { InputMascaraDigitos } from "../components/InputMascaraDigitos"
 import Layout from "../layouts/Layout";
 import "../styles/lancamentoItem.css"
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// Debounce simples para não disparar uma requisição a cada tecla digitada
 function useDebounce(callback, delay) {
   const timeoutRef = useRef(null)
   return useCallback((...args) => {
@@ -14,7 +14,30 @@ function useDebounce(callback, delay) {
   }, [callback, delay])
 }
 
-// Select genérico com busca remota (mesmo padrão do MovimentoFinanceiro)
+function formatarNumeroBR(valor, casas) {
+  if (valor === undefined || valor === null || valor === "") return ""
+  return Number(valor).toLocaleString("pt-BR", {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  })
+}
+
+function criarFormatter(casas) {
+  return (value) => {
+    if (value === undefined || value === null || value === "") return ""
+    return formatarNumeroBR(value, casas)
+  }
+}
+
+function parserNumeroBR(value) {
+  if (value === undefined || value === null || value === "") return 0
+  const texto = String(value).trim()
+  if (texto.includes(",")) {
+    return texto.replace(/\./g, "").replace(",", ".")
+  }
+  return texto
+}
+
 function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, placeholder, disabled }) {
   const [opcoes, setOpcoes] = useState([])
   const [buscando, setBuscando] = useState(false)
@@ -51,7 +74,6 @@ function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, plac
 
   useEffect(() => {
     buscar("")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const options = opcoes.map((item) => ({
@@ -365,10 +387,10 @@ export default function LancamentoItem() {
                   <td>{lan.centro_custo_nome}</td>
                   <td>{lan.tipo_custo_nome}</td>
                   <td>{lan.evento_lancamento_nome}</td>
-                  <td>{lan.quant}</td>
-                  <td>{Number(lan.vlr_unit).toFixed(2)}</td>
-                  <td>{Number(lan.vlr_frete_unitario).toFixed(2)}</td>
-                  <td>{Number(lan.vlr_total).toFixed(2)}</td>
+                  <td>{formatarNumeroBR(lan.quant, 4)}</td>
+                  <td>{formatarNumeroBR(lan.vlr_unit, 4)}</td>
+                  <td>{formatarNumeroBR(lan.vlr_frete_unitario, 4)}</td>
+                  <td>{formatarNumeroBR(lan.vlr_total, 2)}</td>
                 </tr>
               ))
             )}
@@ -525,37 +547,34 @@ export default function LancamentoItem() {
         <div className="linha-modal linha-modal--3col">
           <div className="campo-modal">
             <label>Quantidade</label>
-            <InputNumber
+            <InputMascaraDigitos
               style={{ width: "100%" }}
               value={quant}
               onChange={setQuant}
-              min={0}
-              precision={3}
-              placeholder="0"
+              casas={4}
+              placeholder="0,0000"
             />
           </div>
 
           <div className="campo-modal">
             <label>Valor Unitário</label>
-            <InputNumber
+            <InputMascaraDigitos
               style={{ width: "100%" }}
               value={vlrUnit}
               onChange={setVlrUnit}
-              min={0}
-              precision={2}
-              placeholder="0,00"
+              casas={4}
+              placeholder="0,0000"
             />
           </div>
 
           <div className="campo-modal">
             <label>Frete Unitário</label>
-            <InputNumber
+            <InputMascaraDigitos
               style={{ width: "100%" }}
               value={vlrFrete}
               onChange={setVlrFrete}
-              min={0}
-              precision={2}
-              placeholder="0,00"
+              casas={4}
+              placeholder="0,0000"
             />
           </div>
         </div>
@@ -568,6 +587,8 @@ export default function LancamentoItem() {
               value={vlrTotal}
               disabled
               precision={2}
+              decimalSeparator=","
+              formatter={criarFormatter(2)}
             />
           </div>
         </div>
