@@ -1,15 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import { Input } from "antd"
 
-// Input de dinheiro/quantidade no padrão BR: digitação livre da parte inteira
-// (milhar formatado automaticamente com pontos) e vírgula para iniciar a
-// parte decimal, limitada a `casas` dígitos. Ex: 15258,3655 -> 15.258,3655
-//
-// IMPORTANTE: o estado interno de verdade é `bruto` (dígitos + no máximo uma
-// vírgula, SEM pontos de milhar). O texto com pontos é gerado só para exibição.
-// Nunca reprocessamos o texto já mascarado (com pontos) como se fosse entrada
-// nova — isso é o que causava o bug de "reiniciar" ao passar de 999 para 1000
-// (o ponto de milhar virava vírgula decimal na tecla seguinte).
 export function InputMascaraDigitos({
   value,
   onChange,
@@ -18,7 +9,7 @@ export function InputMascaraDigitos({
   placeholder,
   disabled,
 }) {
-  const [bruto, setBruto] = useState("") // ex: "15258,3655" (sem pontos de milhar)
+  const [bruto, setBruto] = useState("")
   const origemInterna = useRef(false)
 
   function formatarExibicao(valorBruto) {
@@ -39,8 +30,6 @@ export function InputMascaraDigitos({
     return temVirgula ? `${inteiroFormatado},${decimal}` : inteiroFormatado
   }
 
-  // Só resincroniza a partir do `value` externo quando a mudança NÃO veio
-  // do próprio usuário digitando neste input.
   useEffect(() => {
     if (origemInterna.current) {
       origemInterna.current = false
@@ -52,23 +41,17 @@ export function InputMascaraDigitos({
     }
     const strValor = String(value).replace(".", ",")
     setBruto(strValor)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   function handleChange(e) {
-    // Remove tudo que não é dígito ou vírgula, usando o valor exibido (que
-    // pode ter pontos de milhar) — mas os pontos são DESCARTADOS, não
-    // convertidos em vírgula, já que são só decoração visual.
+
     let inputVal = e.target.value.replace(/\./g, "").replace(/[^\d,]/g, "")
 
-    // Aceita "," ou o usuário digitando literalmente uma vírgula onde havia ponto
-    // (já tratado acima). Garante no máximo uma vírgula.
     const partes = inputVal.split(",")
     if (partes.length > 2) {
       inputVal = `${partes[0]},${partes.slice(1).join("")}`
     }
 
-    // Limita as casas decimais
     const partesFinal = inputVal.split(",")
     if (partesFinal.length > 1) {
       inputVal = `${partesFinal[0]},${partesFinal.slice(1).join("").slice(0, casas)}`
@@ -117,7 +100,6 @@ export function InputMascaraDigitos({
       return
     }
 
-    // Permite iniciar a parte decimal com vírgula OU ponto (convertido), só uma vez
     if ((e.key === "," || e.key === ".") && !bruto.includes(",")) {
       return
     }

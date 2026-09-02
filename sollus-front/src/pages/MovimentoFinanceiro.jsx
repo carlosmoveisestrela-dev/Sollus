@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Select, Modal, Input, DatePicker, message } from "antd"
+import { InputMascaraDigitos } from "../components/InputMascaraDigitos"
 import dayjs from "dayjs"
 import Layout from "../layouts/Layout";
 import "../styles/movimentoFin.css"
@@ -39,7 +40,6 @@ function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, plac
 
   const buscarComDebounce = useDebounce(buscar, 400)
 
-  // Ao receber um "value" (ex: ao abrir modal de edição), busca os dados dessa opção específica
   useEffect(() => {
     if (value === null || value === undefined) {
       setOpcaoSelecionada(null)
@@ -53,7 +53,6 @@ function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, plac
 
   useEffect(() => {
     buscar("")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const options = opcoes.map((item) => ({
@@ -61,7 +60,6 @@ function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, plac
     label: item[labelKey],
   }))
 
-  // Garante que a opção selecionada apareça no Select mesmo que não esteja na página atual de resultados
   if (opcaoSelecionada && !options.some((o) => o.value === opcaoSelecionada[valueKey])) {
     options.unshift({ value: opcaoSelecionada[valueKey], label: opcaoSelecionada[labelKey] })
   }
@@ -103,6 +101,7 @@ export default function MovimentoFinanceiro() {
   const [origemLancamentoSelecionada, setOrigemLancamentoSelecionada] = useState(null)
   const [titulo, setTitulo] = useState("")
   const [duplicata, setDuplicata] = useState("")
+  const [vlrDuplicata, setVlrDuplicata] = useState(0)
   const [dtEmissao, setDtEmissao] = useState(null)
   const [dtVencimento, setDtVencimento] = useState(null)
   const [dtPagamento, setDtPagamento] = useState(null)
@@ -132,14 +131,7 @@ export default function MovimentoFinanceiro() {
 
   useEffect(() => {
     buscarMovimentos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagina, tamanhoPagina])
-
-  useEffect(() => {
-    setPagina(1)
-    buscarMovimentos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buscar])
+  }, [pagina, tamanhoPagina, buscar])
 
   function handleTamanhoPaginaChange(valor) {
     setTamanhoPagina(valor)
@@ -153,6 +145,7 @@ export default function MovimentoFinanceiro() {
     setOrigemLancamentoSelecionada(null)
     setTitulo("")
     setDuplicata("")
+    setVlrDuplicata(0)
     setDtEmissao(null)
     setDtVencimento(null)
     setDtPagamento(null)
@@ -174,8 +167,9 @@ export default function MovimentoFinanceiro() {
     setOrigemLancamentoSelecionada(movimento.origem_lancamento_codigo)
     setTitulo(movimento.titulo ?? "")
     setDuplicata(movimento.duplicata ?? "")
+    setVlrDuplicata(Number(movimento.vlr_duplicata) || 0)
     setDtEmissao(movimento.dt_emissao ? dayjs(movimento.dt_emissao) : null)
-    setDtVencimento(movimento.dt_vencimento ? dayjs(movimento.dt_vencimento) : null)    
+    setDtVencimento(movimento.dt_vencimento ? dayjs(movimento.dt_vencimento) : null)
     setDtPagamento(movimento.dt_pagamento ? dayjs(movimento.dt_pagamento) : null)
     setModalAberto(true)
   }
@@ -190,6 +184,21 @@ export default function MovimentoFinanceiro() {
   function handleInserirClick(e) {
     e.preventDefault()
     abrirModalCadastro()
+  }
+
+  function formatarNumeroBR(valor, casas) {
+    if (valor === undefined || valor === null || valor === "") return ""
+    return Number(valor).toLocaleString("pt-BR", {
+      minimumFractionDigits: casas,
+      maximumFractionDigits: casas,
+    })
+  }
+
+  function criarFormatter(casas) {
+    return (value) => {
+      if (value === undefined || value === null || value === "") return ""
+      return formatarNumeroBR(value, casas)
+    }
   }
 
   async function salvarEdicao() {
@@ -230,6 +239,7 @@ export default function MovimentoFinanceiro() {
           dt_emissao: dtEmissao.format("YYYY-MM-DD"),
           dt_vencimento: dtVencimento.format("YYYY-MM-DD"),
           dt_pagamento: dtPagamento ? dtPagamento.format("YYYY-MM-DD") : null,
+          vlr_duplicata: vlrDuplicata,
         }),
       })
 
@@ -329,6 +339,7 @@ export default function MovimentoFinanceiro() {
               <th scope="col">Dt.Lançamento</th>
               <th scope="col">Título</th>
               <th scope="col">Duplicata</th>
+              <th scope="col">Valor Duplicata</th>
               <th scope="col">Dt.Emissão</th>
               <th scope="col">Dt.Vencimento</th>
               <th scope="col">Dt.Pagamento</th>
@@ -358,6 +369,7 @@ export default function MovimentoFinanceiro() {
                   <td>{mov.dt_lancamento ? dayjs(mov.dt_lancamento).format("DD/MM/YYYY HH:mm") : ""}</td>
                   <td>{mov.titulo}</td>
                   <td>{mov.duplicata}</td>
+                  <td>{mov.vlr_duplicata? Number(mov.vlr_duplicata).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : ""}</td>
                   <td>{mov.dt_emissao ? dayjs(mov.dt_emissao).format("DD/MM/YYYY") : ""}</td>
                   <td>{mov.dt_vencimento ? dayjs(mov.dt_vencimento).format("DD/MM/YYYY") : ""}</td>
                   <td>{mov.dt_pagamento ? dayjs(mov.dt_pagamento).format("DD/MM/YYYY") : ""}</td>
@@ -484,6 +496,17 @@ export default function MovimentoFinanceiro() {
               value={duplicata}
               onChange={(e) => setDuplicata(e.target.value)}
               placeholder="Duplicata"
+            />
+          </div>
+
+          <div className="campo-modal">
+            <label>Valor Duplicata</label>
+            <InputMascaraDigitos
+              style={{ width: "100%" }}
+              value={vlrDuplicata}
+              onChange={(valor) => setVlrDuplicata(valor ?? 0)}
+              casas={2}
+              placeholder="0,00"
             />
           </div>
         </div>

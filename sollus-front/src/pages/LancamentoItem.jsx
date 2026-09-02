@@ -390,7 +390,7 @@ export default function LancamentoItem() {
                   <td>{formatarNumeroBR(lan.quant, 4)}</td>
                   <td>{formatarNumeroBR(lan.vlr_unit, 4)}</td>
                   <td>{formatarNumeroBR(lan.vlr_frete_unitario, 4)}</td>
-                  <td>{formatarNumeroBR(lan.vlr_total, 2)}</td>
+                  <td>{lan.vlr_total !== null && lan.vlr_total !== undefined ? Number(lan.vlr_total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : ""}</td>
                 </tr>
               ))
             )}
@@ -568,7 +568,7 @@ export default function LancamentoItem() {
           </div>
 
           <div className="campo-modal">
-            <label>Frete Unitário</label>
+            <label>Valor Frete</label>
             <InputMascaraDigitos
               style={{ width: "100%" }}
               value={vlrFrete}
@@ -581,14 +581,14 @@ export default function LancamentoItem() {
 
         <div className="linha-modal">
           <div className="campo-modal">
-            <label>Valor Total (calculado)</label>
-            <InputNumber
+            <label>Valor Total</label>
+            <InputMascaraDigitos
               style={{ width: "100%" }}
               value={vlrTotal}
+              onChange={() => { }}
+              casas={2}
               disabled
-              precision={2}
-              decimalSeparator=","
-              formatter={criarFormatter(2)}
+              placeholder="0,00"
             />
           </div>
         </div>
