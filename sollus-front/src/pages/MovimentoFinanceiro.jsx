@@ -250,7 +250,15 @@ export default function MovimentoFinanceiro() {
       }
 
       message.success("Movimento salvo com sucesso")
-      fecharModalEdicao()
+
+      if (modoEdicao) {
+        fecharModalEdicao()
+      } else {
+        setDuplicata("")
+        setVlrDuplicata(0)
+        setDtVencimento(null)
+      }
+
       buscarMovimentos()
     } catch (error) {
       console.error("Erro ao salvar movimento:", error)
