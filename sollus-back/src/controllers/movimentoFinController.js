@@ -91,6 +91,7 @@ const create = async (req, res) => {
       origem_lancamento_codigo,
       titulo,
       duplicata,
+      vlr_duplicata,
       dt_emissao,
       dt_vencimento,
       dt_pagamento,
@@ -99,8 +100,8 @@ const create = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO movimento_financeiro
          (empresa_codigo, pessoa_codigo, tipo_lancamento_codigo, origem_lancamento_codigo,
-          titulo, duplicata, dt_emissao, dt_vencimento, dt_pagamento, dt_lancamento)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+          titulo, duplicata, vlr_duplicata, dt_emissao, dt_vencimento, dt_pagamento, dt_lancamento)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
        RETURNING *`,
       [
         empresa_codigo,
@@ -109,6 +110,7 @@ const create = async (req, res) => {
         origem_lancamento_codigo,
         titulo,
         duplicata,
+        vlr_duplicata || 0,
         dt_emissao,
         dt_vencimento,
         dt_pagamento || null,
@@ -135,6 +137,7 @@ const update = async (req, res) => {
       origem_lancamento_codigo,
       titulo,
       duplicata,
+      vlr_duplicata,
       dt_emissao,
       dt_vencimento,
       dt_pagamento,
@@ -148,10 +151,11 @@ const update = async (req, res) => {
            origem_lancamento_codigo = $4,
            titulo = $5,
            duplicata = $6,
-           dt_emissao = $7,
-           dt_vencimento = $8,
-           dt_pagamento = $9
-       WHERE movimento_fin_codigo = $10
+           vlr_duplicata = $7,
+           dt_emissao = $8,
+           dt_vencimento = $9,
+           dt_pagamento = $10
+       WHERE movimento_fin_codigo = $11
        RETURNING *`,
       [
         empresa_codigo,
@@ -160,6 +164,7 @@ const update = async (req, res) => {
         origem_lancamento_codigo,
         titulo,
         duplicata,
+        vlr_duplicata || 0,
         dt_emissao,
         dt_vencimento,
         dt_pagamento || null,
