@@ -152,11 +152,8 @@ export default function CadastroPessoa() {
       return
     }
 
-    if (!telefoneEditando || !celularValido(telefoneEditando)) {
-      message.error("Informe um celular válido: (DDD) 9XXXX-XXXX")
-      return
-    }
-
+    telefoneEditando && !celularValido(telefoneEditando)
+    
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
