@@ -5,6 +5,11 @@ import "../../styles/cadastroTipoCusto.css"
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// Converte o valor S/N salvo no banco para o percentual exibido na tela
+function getPercentualComissao(valor) {
+  return valor === "S" ? "3%" : "0%"
+}
+
 export default function CadastroTipoCusto() {
 
   const [buscar, setBuscar] = useState("")
@@ -21,6 +26,7 @@ export default function CadastroTipoCusto() {
   const [modoEdicao, setModoEdicao] = useState(false)
   const [tipoCustoEdicao, setTipoCustoEdicao] = useState(null)
   const [nomeEditando, setNomeEditando] = useState("")
+  const [comissaoAdmin, setComissaoAdmin] = useState("N")
   const [salvandoEdicao, setSalvandoEdicao] = useState(false)
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
@@ -89,6 +95,7 @@ export default function CadastroTipoCusto() {
     setCentroCustoSelecionado(null)
     setCarteiraAutomatica("")
     setSaidaReal("N")
+    setComissaoAdmin("N")
     setModalAberto(true)
   }
 
@@ -96,6 +103,7 @@ export default function CadastroTipoCusto() {
     setModoEdicao(true)
     setTipoCustoEdicao(tipoCusto)
     setNomeEditando(tipoCusto.tipo_custo_nome)
+    setComissaoAdmin(tipoCusto.comissao_admin ?? "N")
     setCentroCustoSelecionado(tipoCusto.centro_custo_codigo ?? null)
     setCarteiraAutomatica(tipoCusto.carteira_nome ?? "")
     setSaidaReal(tipoCusto.saida_real ?? "N")
@@ -120,6 +128,7 @@ export default function CadastroTipoCusto() {
     setCentroCustoSelecionado(null)
     setCarteiraAutomatica("")
     setSaidaReal("N")
+    setComissaoAdmin("N")
   }
 
   async function salvarEdicao() {
@@ -148,6 +157,7 @@ export default function CadastroTipoCusto() {
         body: JSON.stringify({
           tipo_custo_nome: nomeEditando,
           centro_custo_codigo: centroCustoSelecionado,
+          comissao_admin: comissaoAdmin,
           saida_real: saidaReal,
         })
       })
@@ -249,6 +259,7 @@ export default function CadastroTipoCusto() {
               <th scope="col">Código</th>
               <th scope="col">Carteira</th>
               <th scope="col">Saída Real</th>
+              <th scope="col">Comissão Admin</th>
             </tr>
           </thead>
           <tbody>
@@ -274,6 +285,7 @@ export default function CadastroTipoCusto() {
                   <td className="codigo">{tipoCusto.carteira_codigo}</td>
                   <td>{tipoCusto.carteira_nome}</td>
                   <td>{tipoCusto.saida_real === "S" ? "S" : "N"}</td>
+                  <td>{getPercentualComissao(tipoCusto.comissao_admin)}</td>
                 </tr>
               ))
             )}
@@ -363,6 +375,19 @@ export default function CadastroTipoCusto() {
           options={[
             { value: "S", label: "Sim" },
             { value: "N", label: "Não" },
+          ]}
+        />
+
+        <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
+          Comissão Administração
+        </label>
+        <Select
+          style={{ width: "100%" }}
+          onChange={setComissaoAdmin}
+          value={comissaoAdmin}
+          options={[
+            { value: "S", label: `Sim (${getPercentualComissao("S")})` },
+            { value: "N", label: `Não (${getPercentualComissao("N")})` },
           ]}
         />
       </Modal>

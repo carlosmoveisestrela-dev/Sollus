@@ -109,10 +109,10 @@ export default function CadastroCentroCusto() {
       return
     }
 
-    if (!carteiraSelecionada) {
-      message.warning("Selecione uma carteira.")
-      return
-    }
+    // if (!carteiraSelecionada) {
+    //   message.warning("Selecione uma carteira.")
+    //   return
+    // }
 
     setSalvandoEdicao(true)
     try {

@@ -65,15 +65,15 @@ const create = async (req, res) => {
     if (!centro_custo_nome || centro_custo_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do centro de custo é obrigatório.' })
     }
-    if (!carteira_codigo) {
-      return res.status(400).json({ error: 'Carteira é obrigatória.' })
-    }
+    // if (!carteira_codigo) {
+    //   return res.status(400).json({ error: 'Carteira é obrigatória.' })
+    // }
 
     const nomeFormatado = centro_custo_nome.trim().toUpperCase()
 
     const result = await pool.query(
       "INSERT INTO centro_custo (centro_custo_nome, carteira_codigo) VALUES ($1, $2) RETURNING *",
-      [nomeFormatado, carteira_codigo]
+      [nomeFormatado, carteira_codigo || null]
     )
 
     res.status(201).json(result.rows[0])
@@ -91,15 +91,15 @@ const update = async (req, res) => {
     if (!centro_custo_nome || centro_custo_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do centro custo é obrigatório.' })
     }
-    if (!carteira_codigo) {
-      return res.status(400).json({ error: 'Carteira é obrigatória.' })
-    }
+    // if (!carteira_codigo) {
+    //   return res.status(400).json({ error: 'Carteira é obrigatória.' })
+    // }
 
     const nomeFormatado = centro_custo_nome.trim().toUpperCase()
 
     const result = await pool.query(
       "UPDATE centro_custo SET centro_custo_nome = $1, carteira_codigo = $2 WHERE centro_custo_codigo = $3 RETURNING *",
-      [nomeFormatado, carteira_codigo, id]
+      [nomeFormatado, carteira_codigo || null , id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])

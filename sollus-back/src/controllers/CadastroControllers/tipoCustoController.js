@@ -15,7 +15,7 @@ const getAll = async (req, res) => {
     const total = parseInt(totalResult.rows[0].count)
 
     const result = await pool.query(
-      `SELECT tc.tipo_custo_codigo, tc.tipo_custo_nome, tc.saida_real,
+      `SELECT tc.tipo_custo_codigo, tc.tipo_custo_nome, tc.saida_real, tc.comissao_admin,
        cc.centro_custo_codigo, cc.centro_custo_nome,
        c.carteira_codigo, c.carteira_nome
         FROM tipo_custo tc
@@ -43,7 +43,7 @@ const getById = async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(
-      `SELECT tc.tipo_custo_codigo, tc.tipo_custo_nome, tc.saida_real,
+      `SELECT tc.tipo_custo_codigo, tc.tipo_custo_nome, tc.saida_real, tc.comissao_admin,
               cc.centro_custo_codigo, cc.centro_custo_nome,
               c.carteira_codigo, c.carteira_nome
        FROM tipo_custo tc
@@ -62,7 +62,7 @@ const getById = async (req, res) => {
 // Criar
 const create = async (req, res) => {
   try {
-    const { tipo_custo_nome, centro_custo_codigo, saida_real } = req.body
+    const { tipo_custo_nome, centro_custo_codigo, saida_real, comissao_admin } = req.body
 
     if (!tipo_custo_nome || tipo_custo_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do tipo de custo é obrigatório.' })
@@ -73,10 +73,11 @@ const create = async (req, res) => {
 
     const nomeFormatado = tipo_custo_nome.trim().toUpperCase()
     const saidaRealFormatado = saida_real === "S" ? "S" : "N"
+    const comissaoAdminFormatado = comissao_admin === "S" ? "S" : "N"
 
     const result = await pool.query(
-      "INSERT INTO tipo_custo (tipo_custo_nome, centro_custo_codigo, saida_real) VALUES ($1, $2, $3) RETURNING *",
-      [nomeFormatado, centro_custo_codigo, saidaRealFormatado]
+      "INSERT INTO tipo_custo (tipo_custo_nome, centro_custo_codigo, saida_real, comissao_admin) VALUES ($1, $2, $3, $4) RETURNING *",
+      [nomeFormatado, centro_custo_codigo, saidaRealFormatado, comissaoAdminFormatado]
     )
 
     res.status(201).json(result.rows[0])
@@ -89,7 +90,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { tipo_custo_nome, centro_custo_codigo, saida_real } = req.body
+    const { tipo_custo_nome, centro_custo_codigo, saida_real, comissao_admin } = req.body
 
     if (!tipo_custo_nome || tipo_custo_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do tipo de custo é obrigatório.' })
@@ -100,10 +101,11 @@ const update = async (req, res) => {
 
     const nomeFormatado = tipo_custo_nome.trim().toUpperCase()
     const saidaRealFormatado = saida_real === "S" ? "S" : "N"
+    const comissaoAdminFormatado = comissao_admin === "S" ? "S" : "N"
 
     const result = await pool.query(
-      "UPDATE tipo_custo SET tipo_custo_nome = $1, centro_custo_codigo = $2, saida_real = $3 WHERE tipo_custo_codigo = $4 RETURNING *",
-      [nomeFormatado, centro_custo_codigo, saidaRealFormatado, id]
+      "UPDATE tipo_custo SET tipo_custo_nome = $1, centro_custo_codigo = $2, saida_real = $3, comissao_admin = $4 WHERE tipo_custo_codigo = $5 RETURNING *",
+      [nomeFormatado, centro_custo_codigo, saidaRealFormatado, comissaoAdminFormatado, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
