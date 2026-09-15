@@ -109,16 +109,16 @@ const update = async (req, res) => {
   }
 }
 
-// Deletar (exclusão lógica)
+// Deletar
 const remove = async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(
-      "UPDATE centro_custo SET ativo = false WHERE centro_custo_codigo = $1 RETURNING *",
+      "DELETE FROM centro_custo WHERE centro_custo_codigo = $1 RETURNING *",
       [id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
-    res.json({ message: "Centro de Custo desativado com sucesso" })
+    res.json({ message: "Deletado com sucesso" })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
