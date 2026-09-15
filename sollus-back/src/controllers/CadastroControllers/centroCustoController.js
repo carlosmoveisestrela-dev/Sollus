@@ -9,13 +9,13 @@ const getAll = async (req, res) => {
     const busca = req.query.busca || ""
 
     const totalResult = await pool.query(
-      "SELECT COUNT(*) FROM centro_custo WHERE centro_custo_nome ILIKE $1",
+      "SELECT COUNT(*) FROM centro_custo WHERE ativo = true AND centro_custo_nome ILIKE $1",
       [`%${busca}%`]
     )
     const total = parseInt(totalResult.rows[0].count)
 
     const result = await pool.query(
-      "SELECT * FROM centro_custo WHERE centro_custo_nome ILIKE $1 ORDER BY centro_custo_codigo LIMIT $2 OFFSET $3",
+      "SELECT * FROM centro_custo WHERE ativo = true AND centro_custo_nome ILIKE $1 ORDER BY centro_custo_codigo LIMIT $2 OFFSET $3",
       [`%${busca}%`, limit, offset]
     )
 
@@ -38,6 +38,7 @@ const getAllSimples = async (req, res) => {
               c.carteira_codigo, c.carteira_nome
        FROM centro_custo cc
        LEFT JOIN carteira c ON c.carteira_codigo = cc.carteira_codigo
+       WHERE cc.ativo = true
        ORDER BY cc.centro_custo_nome`
     )
     res.json(result.rows)
@@ -99,7 +100,7 @@ const update = async (req, res) => {
 
     const result = await pool.query(
       "UPDATE centro_custo SET centro_custo_nome = $1, carteira_codigo = $2 WHERE centro_custo_codigo = $3 RETURNING *",
-      [nomeFormatado, carteira_codigo || null , id]
+      [nomeFormatado, carteira_codigo || null, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
@@ -108,22 +109,17 @@ const update = async (req, res) => {
   }
 }
 
-// Deletar
+// Deletar (exclusão lógica)
 const remove = async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(
-      "DELETE FROM centro_custo WHERE centro_custo_codigo = $1 RETURNING *",
+      "UPDATE centro_custo SET ativo = false WHERE centro_custo_codigo = $1 RETURNING *",
       [id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
-    res.json({ message: "Deletado com sucesso" })
+    res.json({ message: "Centro de Custo desativado com sucesso" })
   } catch (error) {
-    if (error.code === "23503") {
-      return res.status(409).json({
-        error: "Não é possível excluir: existem registros vinculados a este centro de custo."
-      })
-    }
     res.status(500).json({ error: error.message })
   }
 }
