@@ -162,16 +162,23 @@ export default function CadastroCentroCusto() {
     if (!centroCustoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`${API_URL}/centro-custo/${centroCustoEdicao.centro_custo_codigo}`, {
+      const response = await fetch(`${API_URL}/centro-custo/${centroCustoEdicao.centro_custo_codigo}`, {
         method: "DELETE"
       })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao excluir Centro de Custo")
+      }
+
       message.success("Centro de Custo excluído com sucesso!")
       fecharModalExcluir()
       fecharModalEdicao()
       buscarCentroCusto()
     } catch (error) {
       console.error("Erro ao excluir Centro de Custo:", error)
-      message.error("Não foi possível conectar à API")
+      message.error(error.message || "Não foi possível conectar à API")
     } finally {
       setExcluindo(false)
     }

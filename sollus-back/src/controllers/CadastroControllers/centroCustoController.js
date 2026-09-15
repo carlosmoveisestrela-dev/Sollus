@@ -119,6 +119,11 @@ const remove = async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json({ message: "Deletado com sucesso" })
   } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        error: "Não é possível excluir: existem registros vinculados a este centro de custo."
+      })
+    }
     res.status(500).json({ error: error.message })
   }
 }
