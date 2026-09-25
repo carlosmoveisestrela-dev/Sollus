@@ -9,8 +9,6 @@ export default function CadastroCentroCusto() {
 
   const [busca, setBusca] = useState("")
   const [centroCustos, setCentroCustos] = useState([])
-  const [carteiras, setCarteiras] = useState([])
-  const [carteiraSelecionada, setCarteiraSelecionada] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
@@ -46,20 +44,6 @@ export default function CadastroCentroCusto() {
     }
   }
 
-  // Busca a lista de carteiras só quando o modal abre, para popular o select
-  useEffect(() => {
-    if (modalAberto) {
-      fetch(`${API_URL}/carteira?limit=1000`)
-        .then((res) => res.json())
-        .then((data) => setCarteiras(data.dados ?? []))
-        .catch((error) => {
-          console.error("Erro ao buscar carteiras:", error)
-          setCarteiras([])
-          message.error("Não foi possível carregar as carteiras")
-        })
-    }
-  }, [modalAberto])
-
   useEffect(() => {
     buscarCentroCusto()
   }, [pagina, tamanhoPagina])
@@ -78,7 +62,6 @@ export default function CadastroCentroCusto() {
     setModoEdicao(false)
     setCentroCustoEdicao(null)
     setNomeEditando("")
-    setCarteiraSelecionada(null)
     setModalAberto(true)
   }
 
@@ -86,7 +69,6 @@ export default function CadastroCentroCusto() {
     setModoEdicao(true)
     setCentroCustoEdicao(centroCusto)
     setNomeEditando(centroCusto.centro_custo_nome)
-    setCarteiraSelecionada(centroCusto.carteira_codigo ?? null)
     setModalAberto(true)
   }
 
@@ -100,7 +82,6 @@ export default function CadastroCentroCusto() {
     setModoEdicao(false)
     setCentroCustoEdicao(null)
     setNomeEditando("")
-    setCarteiraSelecionada(null)
   }
 
   async function salvarEdicao() {
@@ -108,11 +89,6 @@ export default function CadastroCentroCusto() {
       message.warning("O nome do Centro de Custo não pode estar vazio.")
       return
     }
-
-    // if (!carteiraSelecionada) {
-    //   message.warning("Selecione uma carteira.")
-    //   return
-    // }
 
     setSalvandoEdicao(true)
     try {
@@ -128,7 +104,6 @@ export default function CadastroCentroCusto() {
         },
         body: JSON.stringify({
           centro_custo_nome: nomeEditando,
-          carteira_codigo: carteiraSelecionada
         })
       })
 
@@ -225,7 +200,7 @@ export default function CadastroCentroCusto() {
         </div>
       </div>
 
-      {/* Lista de Centro de Custo (sem coluna de Carteira, por decisão do usuário) */}
+      {/* Lista de Centro de Custo */}
       <div className="lista-empresas">
         <table>
           <thead>
@@ -314,20 +289,6 @@ export default function CadastroCentroCusto() {
           onChange={(e) => setNomeEditando(e.target.value)}
           placeholder="Nome do Centro de Custo"
           onPressEnter={salvarEdicao}
-        />
-
-        <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
-          Carteira
-        </label>
-        <Select
-          style={{ width: "100%" }}
-          value={carteiraSelecionada}
-          onChange={setCarteiraSelecionada}
-          placeholder="Selecione a carteira"
-          options={carteiras.map((c) => ({
-            value: c.carteira_codigo,
-            label: c.carteira_nome,
-          }))}
         />
       </Modal>
 

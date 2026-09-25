@@ -16,11 +16,11 @@ const getAll = async (req, res) => {
 
     const result = await pool.query(
       `SELECT tc.tipo_custo_codigo, tc.tipo_custo_nome, tc.saida_real, tc.comissao_admin,
-       cc.centro_custo_codigo, cc.centro_custo_nome,
-       c.carteira_codigo, c.carteira_nome
-        FROM tipo_custo tc
-        JOIN centro_custo cc ON cc.centro_custo_codigo = tc.centro_custo_codigo
-        LEFT JOIN carteira c ON c.carteira_codigo = cc.carteira_codigo
+              cc.centro_custo_codigo, cc.centro_custo_nome,
+              c.carteira_codigo, c.carteira_nome
+       FROM tipo_custo tc
+       JOIN centro_custo cc ON cc.centro_custo_codigo = tc.centro_custo_codigo
+       LEFT JOIN carteira c ON c.carteira_codigo = tc.carteira_codigo
        WHERE tc.tipo_custo_nome ILIKE $1
        ORDER BY tc.tipo_custo_codigo
        LIMIT $2 OFFSET $3`,
@@ -48,7 +48,7 @@ const getById = async (req, res) => {
               c.carteira_codigo, c.carteira_nome
        FROM tipo_custo tc
        JOIN centro_custo cc ON cc.centro_custo_codigo = tc.centro_custo_codigo
-       LEFT JOIN carteira c ON c.carteira_codigo = cc.carteira_codigo
+       LEFT JOIN carteira c ON c.carteira_codigo = tc.carteira_codigo
        WHERE tc.tipo_custo_codigo = $1`,
       [id]
     )
@@ -62,7 +62,7 @@ const getById = async (req, res) => {
 // Criar
 const create = async (req, res) => {
   try {
-    const { tipo_custo_nome, centro_custo_codigo, saida_real, comissao_admin } = req.body
+    const { tipo_custo_nome, centro_custo_codigo, carteira_codigo, saida_real, comissao_admin } = req.body
 
     if (!tipo_custo_nome || tipo_custo_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do tipo de custo é obrigatório.' })
@@ -76,8 +76,9 @@ const create = async (req, res) => {
     const comissaoAdminFormatado = comissao_admin === "S" ? "S" : "N"
 
     const result = await pool.query(
-      "INSERT INTO tipo_custo (tipo_custo_nome, centro_custo_codigo, saida_real, comissao_admin) VALUES ($1, $2, $3, $4) RETURNING *",
-      [nomeFormatado, centro_custo_codigo, saidaRealFormatado, comissaoAdminFormatado]
+      `INSERT INTO tipo_custo (tipo_custo_nome, centro_custo_codigo, carteira_codigo, saida_real, comissao_admin)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [nomeFormatado, centro_custo_codigo, carteira_codigo || null, saidaRealFormatado, comissaoAdminFormatado]
     )
 
     res.status(201).json(result.rows[0])
@@ -90,7 +91,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { tipo_custo_nome, centro_custo_codigo, saida_real, comissao_admin } = req.body
+    const { tipo_custo_nome, centro_custo_codigo, carteira_codigo, saida_real, comissao_admin } = req.body
 
     if (!tipo_custo_nome || tipo_custo_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do tipo de custo é obrigatório.' })
@@ -104,8 +105,11 @@ const update = async (req, res) => {
     const comissaoAdminFormatado = comissao_admin === "S" ? "S" : "N"
 
     const result = await pool.query(
-      "UPDATE tipo_custo SET tipo_custo_nome = $1, centro_custo_codigo = $2, saida_real = $3, comissao_admin = $4 WHERE tipo_custo_codigo = $5 RETURNING *",
-      [nomeFormatado, centro_custo_codigo, saidaRealFormatado, comissaoAdminFormatado, id]
+      `UPDATE tipo_custo
+       SET tipo_custo_nome = $1, centro_custo_codigo = $2, carteira_codigo = $3,
+           saida_real = $4, comissao_admin = $5
+       WHERE tipo_custo_codigo = $6 RETURNING *`,
+      [nomeFormatado, centro_custo_codigo, carteira_codigo || null, saidaRealFormatado, comissaoAdminFormatado, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])

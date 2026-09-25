@@ -16,7 +16,8 @@ export default function CadastroTipoCusto() {
   const [tipoCustos, setTipoCustos] = useState([])
   const [centroCustos, setCentroCustos] = useState([])
   const [centroCustoSelecionado, setCentroCustoSelecionado] = useState(null)
-  const [carteiraAutomatica, setCarteiraAutomatica] = useState("")
+  const [carteiras, setCarteiras] = useState([])
+  const [carteiraSelecionada, setCarteiraSelecionada] = useState(null)
   const [saidaReal, setSaidaReal] = useState("N")
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState(1)
@@ -54,48 +55,60 @@ export default function CadastroTipoCusto() {
     }
   }
 
+  // Carrega centros de custo e carteiras quando o modal abre, para popular os selects
   useEffect(() => {
-    if (modalAberto) {
-      fetch(`${API_URL}/centro-custo/simples`)
-        .then((res) => res.json())
-        .then((data) => setCentroCustos(Array.isArray(data) ? data : []))
-        .catch((error) => {
-          console.error("Erro ao buscar centros de custo:", error)
-          setCentroCustos([])
-          message.error("Não foi possível carregar os centros de custo")
-        })
-    }
+    if (!modalAberto) return
+
+    fetch(`${API_URL}/centro-custo/simples`)
+      .then((res) => res.json())
+      .then((data) => setCentroCustos(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        console.error("Erro ao buscar centros de custo:", error)
+        setCentroCustos([])
+        message.error("Não foi possível carregar os centros de custo")
+      })
+
+    fetch(`${API_URL}/carteira?limit=1000`)
+      .then((res) => res.json())
+      .then((data) => setCarteiras(data.dados ?? []))
+      .catch((error) => {
+        console.error("Erro ao buscar carteiras:", error)
+        setCarteiras([])
+        message.error("Não foi possível carregar as carteiras")
+      })
   }, [modalAberto])
 
+  // Busca com debounce: ao digitar volta para a página 1 e espera 400ms antes de consultar.
+  // Também dispara quando a página ou o tamanho da página mudam.
   useEffect(() => {
-    buscarTipoCusto()
-  }, [pagina, tamanhoPagina])
+    const timer = setTimeout(() => {
+      buscarTipoCusto()
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [pagina, tamanhoPagina, buscar])
 
-  useEffect(() => {
+  function handleBuscarChange(valor) {
+    setBuscar(valor)
     setPagina(1)
-    buscarTipoCusto()
-  }, [buscar])
+  }
 
   function handleTamanhoPaginaChange(valor) {
     setTamanhoPagina(valor)
     setPagina(1)
   }
 
-  // Preenche Carteira automaticamente a partir do Centro de Custo escolhido
-  function handleSelecionarCentroCusto(centroCustoCodigo) {
-    setCentroCustoSelecionado(centroCustoCodigo)
-    const centro = centroCustos.find((cc) => cc.centro_custo_codigo === centroCustoCodigo)
-    setCarteiraAutomatica(centro ? centro.carteira_nome : "")
+  function limparFormulario() {
+    setNomeEditando("")
+    setCentroCustoSelecionado(null)
+    setCarteiraSelecionada(null)
+    setSaidaReal("N")
+    setComissaoAdmin("N")
   }
 
   function abrirModalCadastro() {
     setModoEdicao(false)
     setTipoCustoEdicao(null)
-    setNomeEditando("")
-    setCentroCustoSelecionado(null)
-    setCarteiraAutomatica("")
-    setSaidaReal("N")
-    setComissaoAdmin("N")
+    limparFormulario()
     setModalAberto(true)
   }
 
@@ -105,7 +118,7 @@ export default function CadastroTipoCusto() {
     setNomeEditando(tipoCusto.tipo_custo_nome)
     setComissaoAdmin(tipoCusto.comissao_admin ?? "N")
     setCentroCustoSelecionado(tipoCusto.centro_custo_codigo ?? null)
-    setCarteiraAutomatica(tipoCusto.carteira_nome ?? "")
+    setCarteiraSelecionada(tipoCusto.carteira_codigo ?? null)
     setSaidaReal(tipoCusto.saida_real ?? "N")
     setModalAberto(true)
   }
@@ -115,20 +128,11 @@ export default function CadastroTipoCusto() {
     abrirModalCadastro()
   }
 
-  function handleExcluirClick(tipoCusto) {
-    setTipoCustoEdicao(tipoCusto)
-    setModalExcluirAberto(true)
-  }
-
   function fecharModalEdicao() {
     setModalAberto(false)
     setModoEdicao(false)
     setTipoCustoEdicao(null)
-    setNomeEditando("")
-    setCentroCustoSelecionado(null)
-    setCarteiraAutomatica("")
-    setSaidaReal("N")
-    setComissaoAdmin("N")
+    limparFormulario()
   }
 
   async function salvarEdicao() {
@@ -157,6 +161,7 @@ export default function CadastroTipoCusto() {
         body: JSON.stringify({
           tipo_custo_nome: nomeEditando,
           centro_custo_codigo: centroCustoSelecionado,
+          carteira_codigo: carteiraSelecionada,
           comissao_admin: comissaoAdmin,
           saida_real: saidaReal,
         })
@@ -173,7 +178,7 @@ export default function CadastroTipoCusto() {
       buscarTipoCusto()
     } catch (error) {
       console.error("Erro ao salvar tipo de custo:", error)
-      message.error("Não foi possível salvar o tipo de custo")
+      message.error(error.message || "Não foi possível salvar o tipo de custo")
     } finally {
       setSalvandoEdicao(false)
     }
@@ -186,23 +191,28 @@ export default function CadastroTipoCusto() {
 
   function fecharModalExcluir() {
     setModalExcluirAberto(false)
-    setTipoCustoEdicao(null)
   }
 
   async function confirmarExclusao() {
     if (!tipoCustoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`${API_URL}/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`, {
+      const response = await fetch(`${API_URL}/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`, {
         method: "DELETE",
       })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao excluir tipo de custo")
+      }
+
       message.success("Tipo de custo excluído com sucesso")
       fecharModalExcluir()
       fecharModalEdicao()
       buscarTipoCusto()
     } catch (error) {
       console.error("Erro ao excluir tipo de custo:", error)
-      message.error("Não foi possível excluir o tipo de custo")
+      message.error(error.message || "Não foi possível excluir o tipo de custo")
     } finally {
       setExcluindo(false)
     }
@@ -220,7 +230,7 @@ export default function CadastroTipoCusto() {
             <input
               type="text"
               value={buscar}
-              onChange={(e) => setBuscar(e.target.value)}
+              onChange={(e) => handleBuscarChange(e.target.value)}
               placeholder="Buscar tipo de custo"
             />
             <button type="submit" className="inserir">Inserir</button>
@@ -265,11 +275,11 @@ export default function CadastroTipoCusto() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={7} className="vazio">Carregando...</td>
+                <td colSpan={8} className="vazio">Carregando...</td>
               </tr>
             ) : tipoCustos.length === 0 ? (
               <tr>
-                <td colSpan={7} className="vazio">Nenhum Tipo de Custo Cadastrado</td>
+                <td colSpan={8} className="vazio">Nenhum Tipo de Custo Cadastrado</td>
               </tr>
             ) : (
               tipoCustos.map((tipoCusto) => (
@@ -352,7 +362,7 @@ export default function CadastroTipoCusto() {
         <Select
           style={{ width: "100%" }}
           value={centroCustoSelecionado}
-          onChange={handleSelecionarCentroCusto}
+          onChange={setCentroCustoSelecionado}
           placeholder="Selecione o centro de custo"
           options={centroCustos.map((cc) => ({
             value: cc.centro_custo_codigo,
@@ -363,7 +373,17 @@ export default function CadastroTipoCusto() {
         <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
           Carteira
         </label>
-        <Input value={carteiraAutomatica} disabled placeholder="Selecione um centro de custo" />
+        <Select
+          style={{ width: "100%" }}
+          value={carteiraSelecionada}
+          onChange={setCarteiraSelecionada}
+          placeholder="Selecione a carteira (opcional)"
+          allowClear
+          options={carteiras.map((c) => ({
+            value: c.carteira_codigo,
+            label: c.carteira_nome,
+          }))}
+        />
 
         <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
           Saída Real
