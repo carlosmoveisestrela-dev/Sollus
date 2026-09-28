@@ -62,7 +62,6 @@ export default function CadastroCentroCusto() {
     setModoEdicao(false)
     setCentroCustoEdicao(null)
     setNomeEditando("")
-    setCarteiraSelecionada(null)
     setModalAberto(true)
   }
 
@@ -82,7 +81,6 @@ export default function CadastroCentroCusto() {
     setModoEdicao(false)
     setCentroCustoEdicao(null)
     setNomeEditando("")
-    setCarteiraSelecionada(null)
   }
 
   async function salvarEdicao() {
