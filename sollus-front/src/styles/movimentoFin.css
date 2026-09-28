@@ -110,6 +110,33 @@ body {
   cursor: not-allowed;
 }
 
+/* Botão "Validar Título" (rodapé do modal, ao lado do Excluir) */
+.validar {
+  padding: 0 20px;
+  height: 30px;
+  background: #52c41a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.validar:hover:not(:disabled) {
+  background: #389e0d;
+}
+
+.validar:active:not(:disabled) {
+  background: #237804;
+}
+
+.validar:disabled {
+  background: #95de64;
+  cursor: not-allowed;
+}
+
 /* Search */
 .search-wrapper {
   display: flex;
@@ -253,6 +280,12 @@ body {
   background-color: #008cff;
 }
 
+/* Tag de status (Validado / Validação Pendente) na tabela */
+.empresa-row .ant-tag {
+  margin: 0;
+  white-space: nowrap;
+}
+
 /* Paginação */
 .paginacao {
   display: flex;
@@ -324,4 +357,12 @@ body {
 
 .linha-modal .campo-modal {
   min-width: 0;
+}
+
+/* Tag de status no topo do modal de edição */
+.linha-modal .ant-tag {
+  margin: 0;
+  justify-self: start;
+  font-size: 12px;
+  padding: 2px 10px;
 }

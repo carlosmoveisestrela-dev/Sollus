@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { Select, Modal, Input, DatePicker, message } from "antd"
+import { Select, Modal, Input, DatePicker, message, Tag } from "antd"
 import { InputMascaraDigitos } from "../components/InputMascaraDigitos"
 import dayjs from "dayjs"
 import Layout from "../layouts/Layout";
@@ -7,7 +7,6 @@ import "../styles/movimentoFin.css"
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// Debounce simples para não disparar uma requisição a cada tecla digitada
 function useDebounce(callback, delay) {
   const timeoutRef = useRef(null)
   return useCallback((...args) => {
@@ -16,7 +15,6 @@ function useDebounce(callback, delay) {
   }, [callback, delay])
 }
 
-// Select genérico com busca remota, usado para Empresa/Pessoa/Tipo/Origem
 function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, placeholder, disabled }) {
   const [opcoes, setOpcoes] = useState([])
   const [buscando, setBuscando] = useState(false)
@@ -95,6 +93,7 @@ export default function MovimentoFinanceiro() {
   const [salvandoEdicao, setSalvandoEdicao] = useState(false)
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
+  const [validando, setValidando] = useState(false)
   const [empresaSelecionada, setEmpresaSelecionada] = useState(null)
   const [pessoaSelecionada, setPessoaSelecionada] = useState(null)
   const [tipoLancamentoSelecionado, setTipoLancamentoSelecionado] = useState(null)
@@ -105,6 +104,7 @@ export default function MovimentoFinanceiro() {
   const [dtEmissao, setDtEmissao] = useState(null)
   const [dtVencimento, setDtVencimento] = useState(null)
   const [dtPagamento, setDtPagamento] = useState(null)
+  const [validado, setValidado] = useState(false)
 
   async function buscarMovimentos() {
     setCarregando(true)
@@ -149,6 +149,7 @@ export default function MovimentoFinanceiro() {
     setDtEmissao(null)
     setDtVencimento(null)
     setDtPagamento(null)
+    setValidado(false)
   }
 
   function abrirModalCadastro() {
@@ -171,6 +172,7 @@ export default function MovimentoFinanceiro() {
     setDtEmissao(movimento.dt_emissao ? dayjs(movimento.dt_emissao) : null)
     setDtVencimento(movimento.dt_vencimento ? dayjs(movimento.dt_vencimento) : null)
     setDtPagamento(movimento.dt_pagamento ? dayjs(movimento.dt_pagamento) : null)
+    setValidado(Boolean(movimento.validado))
     setModalAberto(true)
   }
 
@@ -296,6 +298,32 @@ export default function MovimentoFinanceiro() {
     }
   }
 
+  async function validarTitulo() {
+    if (!movimentoEdicao) return
+    setValidando(true)
+    try {
+      const response = await fetch(
+        `${API_URL}/movimentofin/${movimentoEdicao.movimento_fin_codigo}/validar`,
+        { method: "POST" }
+      )
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Os valores do título não conferem")
+      }
+
+      message.success("Título validado com sucesso")
+      setValidado(true)
+      setMovimentoEdicao((prev) => prev ? { ...prev, validado: true } : prev)
+      buscarMovimentos()
+    } catch (error) {
+      console.error("Erro ao validar título:", error)
+      message.error(error.message || "Não foi possível validar o título")
+    } finally {
+      setValidando(false)
+    }
+  }
+
   return (
     <form className="formulario" onSubmit={handleInserirClick}>
 
@@ -351,16 +379,17 @@ export default function MovimentoFinanceiro() {
               <th scope="col">Dt.Emissão</th>
               <th scope="col">Dt.Vencimento</th>
               <th scope="col">Dt.Pagamento</th>
+              <th scope="col">Validação</th>
             </tr>
           </thead>
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={11} className="vazio">Carregando...</td>
+                <td colSpan={13} className="vazio">Carregando...</td>
               </tr>
             ) : movimentos.length === 0 ? (
               <tr>
-                <td colSpan={11} className="vazio">Nenhum Movimento Cadastrado</td>
+                <td colSpan={13} className="vazio">Nenhum Movimento Cadastrado</td>
               </tr>
             ) : (
               movimentos.map((mov) => (
@@ -381,6 +410,13 @@ export default function MovimentoFinanceiro() {
                   <td>{mov.dt_emissao ? dayjs(mov.dt_emissao).format("DD/MM/YYYY") : ""}</td>
                   <td>{mov.dt_vencimento ? dayjs(mov.dt_vencimento).format("DD/MM/YYYY") : ""}</td>
                   <td>{mov.dt_pagamento ? dayjs(mov.dt_pagamento).format("DD/MM/YYYY") : ""}</td>
+                  <td>
+                    {mov.validado ? (
+                      <Tag color="success">Validado</Tag>
+                    ) : (
+                      <Tag color="warning">Pendente</Tag>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
@@ -421,13 +457,25 @@ export default function MovimentoFinanceiro() {
         footer={(_, { CancelBtn, OkBtn }) => (
           <div style={{ display: "flex", justifyContent: modoEdicao ? "space-between" : "flex-end", alignItems: "center" }}>
             {modoEdicao && (
-              <button
-                type="button"
-                className="excluir"
-                onClick={abrirModalExcluirDoEdicao}
-              >
-                Excluir
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  className="excluir"
+                  onClick={abrirModalExcluirDoEdicao}
+                >
+                  Excluir
+                </button>
+                {!validado && (
+                  <button
+                    type="button"
+                    className="validar"
+                    onClick={validarTitulo}
+                    disabled={validando}
+                  >
+                    {validando ? "Validando..." : "Validar Título"}
+                  </button>
+                )}
+              </div>
             )}
             <div style={{ display: "flex", gap: 8 }}>
               <CancelBtn />
@@ -436,6 +484,16 @@ export default function MovimentoFinanceiro() {
           </div>
         )}
       >
+        {modoEdicao && (
+          <div className="linha-modal">
+            {validado ? (
+              <Tag color="success">Validado</Tag>
+            ) : (
+              <Tag color="warning">Validação Pendente</Tag>
+            )}
+          </div>
+        )}
+
         <div className="linha-modal">
           <div className="campo-modal">
             <label>Empresa</label>
