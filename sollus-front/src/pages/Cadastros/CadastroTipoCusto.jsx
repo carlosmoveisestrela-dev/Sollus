@@ -5,7 +5,6 @@ import "../../styles/cadastroTipoCusto.css"
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// Converte o valor S/N salvo no banco para o percentual exibido na tela
 function getPercentualComissao(valor) {
   return valor === "S" ? "3%" : "0%"
 }
@@ -16,7 +15,8 @@ export default function CadastroTipoCusto() {
   const [tipoCustos, setTipoCustos] = useState([])
   const [centroCustos, setCentroCustos] = useState([])
   const [centroCustoSelecionado, setCentroCustoSelecionado] = useState(null)
-  const [carteiraAutomatica, setCarteiraAutomatica] = useState("")
+  const [carteiras, setCarteiras] = useState([])
+  const [carteiraSelecionada, setCarteiraSelecionada] = useState(null)
   const [saidaReal, setSaidaReal] = useState("N")
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState(1)
@@ -54,6 +54,20 @@ export default function CadastroTipoCusto() {
     }
   }
 
+  // Busca a lista de carteiras só quando o modal abre, para popular o select
+  useEffect(() => {
+    if (modalAberto) {
+      fetch(`${API_URL}/carteira?limit=1000`)
+        .then((res) => res.json())
+        .then((data) => setCarteiras(data.dados ?? []))
+        .catch((error) => {
+          console.error("Erro ao buscar carteiras:", error)
+          setCarteiras([])
+          message.error("Não foi possível carregar as carteiras")
+        })
+    }
+  }, [modalAberto])
+
   useEffect(() => {
     if (modalAberto) {
       fetch(`${API_URL}/centro-custo/simples`)
@@ -81,19 +95,12 @@ export default function CadastroTipoCusto() {
     setPagina(1)
   }
 
-  // Preenche Carteira automaticamente a partir do Centro de Custo escolhido
-  function handleSelecionarCentroCusto(centroCustoCodigo) {
-    setCentroCustoSelecionado(centroCustoCodigo)
-    const centro = centroCustos.find((cc) => cc.centro_custo_codigo === centroCustoCodigo)
-    setCarteiraAutomatica(centro ? centro.carteira_nome : "")
-  }
-
   function abrirModalCadastro() {
     setModoEdicao(false)
     setTipoCustoEdicao(null)
     setNomeEditando("")
     setCentroCustoSelecionado(null)
-    setCarteiraAutomatica("")
+    setCarteiraSelecionada(null)
     setSaidaReal("N")
     setComissaoAdmin("N")
     setModalAberto(true)
@@ -105,7 +112,7 @@ export default function CadastroTipoCusto() {
     setNomeEditando(tipoCusto.tipo_custo_nome)
     setComissaoAdmin(tipoCusto.comissao_admin ?? "N")
     setCentroCustoSelecionado(tipoCusto.centro_custo_codigo ?? null)
-    setCarteiraAutomatica(tipoCusto.carteira_nome ?? "")
+    setCarteiraSelecionada(tipoCusto.carteira_codigo ?? null)
     setSaidaReal(tipoCusto.saida_real ?? "N")
     setModalAberto(true)
   }
@@ -126,7 +133,7 @@ export default function CadastroTipoCusto() {
     setTipoCustoEdicao(null)
     setNomeEditando("")
     setCentroCustoSelecionado(null)
-    setCarteiraAutomatica("")
+    setCarteiraSelecionada(null)
     setSaidaReal("N")
     setComissaoAdmin("N")
   }
@@ -139,6 +146,11 @@ export default function CadastroTipoCusto() {
 
     if (!centroCustoSelecionado) {
       message.error("Selecione um centro de custo")
+      return
+    }
+
+    if (!carteiraSelecionada) {
+      message.error("Selecione uma carteira")
       return
     }
 
@@ -157,6 +169,7 @@ export default function CadastroTipoCusto() {
         body: JSON.stringify({
           tipo_custo_nome: nomeEditando,
           centro_custo_codigo: centroCustoSelecionado,
+          carteira_codigo: carteiraSelecionada,
           comissao_admin: comissaoAdmin,
           saida_real: saidaReal,
         })
@@ -173,7 +186,7 @@ export default function CadastroTipoCusto() {
       buscarTipoCusto()
     } catch (error) {
       console.error("Erro ao salvar tipo de custo:", error)
-      message.error("Não foi possível salvar o tipo de custo")
+      message.error(error.message || "Não foi possível salvar o tipo de custo")
     } finally {
       setSalvandoEdicao(false)
     }
@@ -265,11 +278,11 @@ export default function CadastroTipoCusto() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={7} className="vazio">Carregando...</td>
+                <td colSpan={8} className="vazio">Carregando...</td>
               </tr>
             ) : tipoCustos.length === 0 ? (
               <tr>
-                <td colSpan={7} className="vazio">Nenhum Tipo de Custo Cadastrado</td>
+                <td colSpan={8} className="vazio">Nenhum Tipo de Custo Cadastrado</td>
               </tr>
             ) : (
               tipoCustos.map((tipoCusto) => (
@@ -352,7 +365,7 @@ export default function CadastroTipoCusto() {
         <Select
           style={{ width: "100%" }}
           value={centroCustoSelecionado}
-          onChange={handleSelecionarCentroCusto}
+          onChange={setCentroCustoSelecionado}
           placeholder="Selecione o centro de custo"
           options={centroCustos.map((cc) => ({
             value: cc.centro_custo_codigo,
@@ -363,7 +376,16 @@ export default function CadastroTipoCusto() {
         <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
           Carteira
         </label>
-        <Input value={carteiraAutomatica} disabled placeholder="Selecione um centro de custo" />
+        <Select
+          style={{ width: "100%" }}
+          value={carteiraSelecionada}
+          onChange={setCarteiraSelecionada}
+          placeholder="Selecione a carteira"
+          options={carteiras.map((c) => ({
+            value: c.carteira_codigo,
+            label: c.carteira_nome,
+          }))}
+        />
 
         <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
           Saída Real
