@@ -12,6 +12,7 @@ function getPercentualComissao(valor) {
 export default function CadastroTipoCusto() {
 
   const [buscar, setBuscar] = useState("")
+  const [buscaAplicada, setBuscaAplicada] = useState("")
   const [tipoCustos, setTipoCustos] = useState([])
   const [centroCustos, setCentroCustos] = useState([])
   const [centroCustoSelecionado, setCentroCustoSelecionado] = useState(null)
@@ -31,11 +32,14 @@ export default function CadastroTipoCusto() {
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
 
-  async function buscarTipoCusto() {
+  // signal é opcional: o useEffect passa um AbortController, e as chamadas
+  // manuais (após salvar/excluir) podem chamar sem argumento.
+  async function buscarTipoCusto(signal) {
     setCarregando(true)
     try {
       const response = await fetch(
-        `${API_URL}/tipo-custo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(buscar)}`
+        `${API_URL}/tipo-custo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(buscaAplicada)}`,
+        { signal }
       )
       const data = await response.json()
 
@@ -46,11 +50,14 @@ export default function CadastroTipoCusto() {
       setTipoCustos(data.dados ?? [])
       setTotalPaginas(data.totalPaginas ?? 1)
     } catch (error) {
+      // Requisição cancelada porque outra mais nova foi disparada: ignora
+      if (error.name === "AbortError") return
+
       console.error("Erro ao buscar tipo de custo:", error)
       setTipoCustos([])
       message.error("Não foi possível conectar à API")
     } finally {
-      setCarregando(false)
+      if (!signal?.aborted) setCarregando(false)
     }
   }
 
@@ -81,14 +88,22 @@ export default function CadastroTipoCusto() {
     }
   }, [modalAberto])
 
+  // Debounce da busca: só aplica 400ms depois de parar de digitar e volta para a página 1
   useEffect(() => {
-    buscarTipoCusto()
-  }, [pagina, tamanhoPagina])
-
-  useEffect(() => {
-    setPagina(1)
-    buscarTipoCusto()
+    const timer = setTimeout(() => {
+      setBuscaAplicada(buscar)
+      setPagina(1)
+    }, 400)
+    return () => clearTimeout(timer)
   }, [buscar])
+
+  // Único efeito que carrega a lista. Cancela a requisição anterior quando
+  // pagina, tamanhoPagina ou busca mudam, evitando respostas fora de ordem.
+  useEffect(() => {
+    const controller = new AbortController()
+    buscarTipoCusto(controller.signal)
+    return () => controller.abort()
+  }, [pagina, tamanhoPagina, buscaAplicada])
 
   function handleTamanhoPaginaChange(valor) {
     setTamanhoPagina(valor)
@@ -157,7 +172,7 @@ export default function CadastroTipoCusto() {
     setSalvandoEdicao(true)
     try {
       const url = modoEdicao
-        ? `${API_URL}/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`
+        ? `${API_URL}/tipo-custo/${tipoCustoEdicao.id}`
         : `${API_URL}/tipo-custo`
       const method = modoEdicao ? "PUT" : "POST"
 
@@ -206,16 +221,30 @@ export default function CadastroTipoCusto() {
     if (!tipoCustoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`${API_URL}/tipo-custo/${tipoCustoEdicao.tipo_custo_codigo}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        `${API_URL}/tipo-custo/${tipoCustoEdicao.id}`,
+        { method: "DELETE" }
+      )
+
+      // Antes o código mostrava "sucesso" mesmo quando a API retornava erro
+      if (!response.ok) {
+        let erroApi = "Erro ao excluir tipo de custo"
+        try {
+          const data = await response.json()
+          erroApi = data.error || erroApi
+        } catch {
+          // resposta sem corpo JSON
+        }
+        throw new Error(erroApi)
+      }
+
       message.success("Tipo de custo excluído com sucesso")
       fecharModalExcluir()
       fecharModalEdicao()
       buscarTipoCusto()
     } catch (error) {
       console.error("Erro ao excluir tipo de custo:", error)
-      message.error("Não foi possível excluir o tipo de custo")
+      message.error(error.message || "Não foi possível excluir o tipo de custo")
     } finally {
       setExcluindo(false)
     }
@@ -266,10 +295,9 @@ export default function CadastroTipoCusto() {
           <thead>
             <tr>
               <th scope="col">Código</th>
-              <th scope="col">Tipo de Custo</th>
-              <th scope="col">Código</th>
               <th scope="col">Centro de Custo</th>
               <th scope="col">Código</th>
+              <th scope="col">Tipo de Custo</th>
               <th scope="col">Carteira</th>
               <th scope="col">Saída Real</th>
               <th scope="col">Comissão Admin</th>
@@ -289,12 +317,12 @@ export default function CadastroTipoCusto() {
                 <tr
                   onDoubleClick={() => abrirModalEdicao(tipoCusto)}
                   className="empresa-row"
-                  key={String(tipoCusto.tipo_custo_codigo)}
+                  key={tipoCusto.id}
                 >
-                  <td className="codigo">{tipoCusto.tipo_custo_codigo}</td>
-                  <td>{tipoCusto.tipo_custo_nome}</td>
                   <td className="codigo">{tipoCusto.centro_custo_codigo}</td>
                   <td>{tipoCusto.centro_custo_nome}</td>
+                  <td className="codigo">{tipoCusto.tipo_custo_codigo}</td>
+                  <td>{tipoCusto.tipo_custo_nome}</td>
                   <td className="codigo">{tipoCusto.carteira_codigo}</td>
                   <td>{tipoCusto.carteira_nome}</td>
                   <td>{tipoCusto.saida_real === "S" ? "S" : "N"}</td>
@@ -318,7 +346,7 @@ export default function CadastroTipoCusto() {
 
           <button
             type="button"
-            disabled={pagina === totalPaginas}
+            disabled={pagina >= totalPaginas}
             onClick={() => setPagina(p => p + 1)}
           >
             Próxima
@@ -366,6 +394,7 @@ export default function CadastroTipoCusto() {
           style={{ width: "100%" }}
           value={centroCustoSelecionado}
           onChange={setCentroCustoSelecionado}
+          disabled={modoEdicao}
           placeholder="Selecione o centro de custo"
           options={centroCustos.map((cc) => ({
             value: cc.centro_custo_codigo,
