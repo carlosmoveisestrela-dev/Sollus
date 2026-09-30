@@ -306,11 +306,11 @@ export default function CadastroTipoCusto() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={8} className="vazio">Carregando...</td>
+                <td colSpan={7} className="vazio">Carregando...</td>
               </tr>
             ) : tipoCustos.length === 0 ? (
               <tr>
-                <td colSpan={8} className="vazio">Nenhum Tipo de Custo Cadastrado</td>
+                <td colSpan={7} className="vazio">Nenhum Tipo de Custo Cadastrado</td>
               </tr>
             ) : (
               tipoCustos.map((tipoCusto) => (
@@ -324,7 +324,6 @@ export default function CadastroTipoCusto() {
                   <td className="codigo">{tipoCusto.tipo_custo_codigo}</td>
                   <td>{tipoCusto.tipo_custo_nome}</td>
                   <td className="codigo">{tipoCusto.carteira_codigo}</td>
-                  <td>{tipoCusto.carteira_nome}</td>
                   <td>{tipoCusto.saida_real === "S" ? "S" : "N"}</td>
                   <td>{getPercentualComissao(tipoCusto.comissao_admin)}</td>
                 </tr>

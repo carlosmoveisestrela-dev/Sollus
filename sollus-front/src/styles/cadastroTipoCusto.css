@@ -230,8 +230,22 @@ body {
   padding-right: 8px;
 }
 
+/* Saída Real (6) e Comissão Admin (7): centralizadas */
+.lista-empresas th:nth-child(6),
+.lista-empresas td:nth-child(6),
+.lista-empresas th:nth-child(7),
+.lista-empresas td:nth-child(7) {
+  text-align: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
 
-.lista-empresas .vazio {
+/* Linhas "Carregando..." / "Nenhum cadastrado" ocupam a tabela toda
+   e não devem herdar a largura fixa da coluna 1 */
+.lista-empresas td.vazio {
+  width: auto;
+  min-width: 0;
+  max-width: none;
   text-align: center;
   color: #aaa;
   font-size: 13px;
