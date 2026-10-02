@@ -38,17 +38,41 @@ function parserNumeroBR(value) {
   return texto
 }
 
-function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, placeholder, disabled }) {
+function montarQuery(texto, filtros) {
+  const params = new URLSearchParams({ page: "1", limit: "20", busca: texto })
+  Object.entries(filtros || {}).forEach(([chave, valor]) => {
+    if (valor !== null && valor !== undefined && valor !== "") {
+      params.append(chave, valor)
+    }
+  })
+  return params.toString()
+}
+
+// filtros: filtros extras enviados na listagem (ex.: { centro_custo_codigo: 18 }).
+// lookupPorFiltro: quando true, o item selecionado é buscado pela listagem
+//   (filtros + valueKey=value) em vez de GET /endpoint/:value.
+//   Necessário quando o valueKey não é a PK da tabela (ex.: tipo-custo).
+function SelectBuscaRemota({
+  endpoint,
+  valueKey,
+  labelKey,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  filtros,
+  lookupPorFiltro,
+}) {
   const [opcoes, setOpcoes] = useState([])
   const [buscando, setBuscando] = useState(false)
   const [opcaoSelecionada, setOpcaoSelecionada] = useState(null)
 
+  const filtrosKey = JSON.stringify(filtros ?? {})
+
   async function buscar(texto) {
     setBuscando(true)
     try {
-      const response = await fetch(
-        `${API_URL}/${endpoint}?page=1&limit=20&busca=${encodeURIComponent(texto)}`
-      )
+      const response = await fetch(`${API_URL}/${endpoint}?${montarQuery(texto, filtros)}`)
       const data = await response.json()
       setOpcoes(data.dados ?? [])
     } catch (error) {
@@ -66,15 +90,37 @@ function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, plac
       setOpcaoSelecionada(null)
       return
     }
-    fetch(`${API_URL}/${endpoint}/${value}`)
-      .then((res) => res.json())
-      .then((data) => setOpcaoSelecionada(data))
-      .catch(() => setOpcaoSelecionada(null))
-  }, [value, endpoint])
+
+    let cancelado = false
+
+    const requisicao = lookupPorFiltro
+      ? fetch(`${API_URL}/${endpoint}?${montarQuery("", { ...filtros, [valueKey]: value })}`)
+          .then((res) => res.json())
+          .then((data) => data.dados?.[0] ?? null)
+      : fetch(`${API_URL}/${endpoint}/${value}`).then((res) => res.json())
+
+    requisicao
+      .then((data) => {
+        if (!cancelado) setOpcaoSelecionada(data)
+      })
+      .catch(() => {
+        if (!cancelado) setOpcaoSelecionada(null)
+      })
+
+    return () => {
+      cancelado = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, endpoint, filtrosKey, lookupPorFiltro, valueKey])
 
   useEffect(() => {
+    if (disabled) {
+      setOpcoes([])
+      return
+    }
     buscar("")
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtrosKey, disabled])
 
   const options = opcoes.map((item) => ({
     value: item[valueKey],
@@ -102,6 +148,75 @@ function SelectBuscaRemota({ endpoint, valueKey, labelKey, value, onChange, plac
   )
 }
 
+// Select que carrega uma lista simples (sem paginação) de uma URL.
+// Se `url` for null, fica desabilitado (dependência ainda não escolhida).
+// Com `autoSelecionarUnico`, escolhe sozinho quando só existe uma opção.
+function SelectLista({ url, valueKey, value, onChange, placeholder, autoSelecionarUnico }) {
+  const [linhas, setLinhas] = useState([])
+  const [carregando, setCarregando] = useState(false)
+
+  useEffect(() => {
+    if (!url) {
+      setLinhas([])
+      return
+    }
+
+    let cancelado = false
+    setCarregando(true)
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelado) return
+        const lista = Array.isArray(data) ? data : []
+        setLinhas(lista)
+
+        if (autoSelecionarUnico) {
+          const validas = lista.filter((l) => l[valueKey])
+          if (validas.length === 1) onChange(validas[0][valueKey])
+        }
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar lista:", error)
+        if (!cancelado) setLinhas([])
+      })
+      .finally(() => {
+        if (!cancelado) setCarregando(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
+    // onChange propositalmente fora das dependências
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, valueKey, autoSelecionarUnico])
+
+  const options = linhas
+    .filter((l) => l[valueKey])
+    .map((l) => ({ value: l[valueKey], label: l[valueKey] }))
+
+  // Garante que o valor atual apareça mesmo se não veio na lista
+  if (value && !options.some((o) => o.value === value)) {
+    options.unshift({ value, label: value })
+  }
+
+  return (
+    <Select
+      style={{ width: "100%" }}
+      value={value ?? undefined}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={!url}
+      showSearch
+      optionFilterProp="label"
+      loading={carregando}
+      notFoundContent={carregando ? "Buscando..." : "Nenhum resultado"}
+      options={options}
+      allowClear
+    />
+  )
+}
+
 export default function LancamentoItem() {
 
   const [buscar, setBuscar] = useState("")
@@ -119,7 +234,8 @@ export default function LancamentoItem() {
 
   const [undNegCodigo, setUndNegCodigo] = useState(null)
   const [pessoaCodigo, setPessoaCodigo] = useState(null)
-  const [titulo, setTitulo] = useState("")
+  const [titulo, setTitulo] = useState(null)
+  const [duplicata, setDuplicata] = useState(null)
   const [itemCodigo, setItemCodigo] = useState(null)
   const [centroCustoCodigo, setCentroCustoCodigo] = useState(null)
   const [tipoCustoCodigo, setTipoCustoCodigo] = useState(null)
@@ -130,6 +246,14 @@ export default function LancamentoItem() {
   const [vlrFrete, setVlrFrete] = useState(0)
 
   const vlrTotal = Number(quant || 0) * (Number(vlrUnit || 0) + Number(vlrFrete || 0))
+
+  const urlTitulos = pessoaCodigo
+    ? `${API_URL}/lancamento-item/titulos?pessoa_codigo=${encodeURIComponent(pessoaCodigo)}`
+    : null
+
+  const urlDuplicatas = pessoaCodigo && titulo
+    ? `${API_URL}/lancamento-item/duplicatas?pessoa_codigo=${encodeURIComponent(pessoaCodigo)}&titulo=${encodeURIComponent(titulo)}`
+    : null
 
   async function buscarLancamentos() {
     setCarregando(true)
@@ -169,10 +293,29 @@ export default function LancamentoItem() {
     setPagina(1)
   }
 
+  function handlePessoaChange(valor) {
+    setPessoaCodigo(valor)
+    setTitulo(null)
+    setDuplicata(null)
+  }
+
+  function handleTituloChange(valor) {
+    setTitulo(valor ?? null)
+    setDuplicata(null)
+  }
+
+  // O código do tipo de custo só faz sentido dentro de um centro de custo,
+  // então trocar o centro limpa o tipo selecionado.
+  function handleCentroCustoChange(valor) {
+    setCentroCustoCodigo(valor ?? null)
+    setTipoCustoCodigo(null)
+  }
+
   function limparFormulario() {
     setUndNegCodigo(null)
     setPessoaCodigo(null)
-    setTitulo("")
+    setTitulo(null)
+    setDuplicata(null)
     setItemCodigo(null)
     setCentroCustoCodigo(null)
     setTipoCustoCodigo(null)
@@ -195,7 +338,8 @@ export default function LancamentoItem() {
     setLancamentoEdicao(lancamento)
     setUndNegCodigo(lancamento.und_neg_codigo)
     setPessoaCodigo(lancamento.pessoa_codigo)
-    setTitulo(lancamento.titulo ?? "")
+    setTitulo(lancamento.titulo || null)
+    setDuplicata(lancamento.duplicata || null)
     setItemCodigo(lancamento.item_codigo)
     setCentroCustoCodigo(lancamento.centro_custo_codigo)
     setTipoCustoCodigo(lancamento.tipo_custo_codigo)
@@ -224,7 +368,7 @@ export default function LancamentoItem() {
       message.error("Und. Negócio, Pessoa, Item, Centro de Custo, Tipo de Custo e Evento de Lançamento são obrigatórios")
       return
     }
-    if (!titulo || titulo.trim() === "") {
+    if (!titulo) {
       message.error("O Título é obrigatório")
       return
     }
@@ -251,6 +395,7 @@ export default function LancamentoItem() {
           und_neg_codigo: undNegCodigo,
           pessoa_codigo: pessoaCodigo,
           titulo,
+          duplicata,
           item_codigo: itemCodigo,
           centro_custo_codigo: centroCustoCodigo,
           tipo_custo_codigo: tipoCustoCodigo,
@@ -353,6 +498,7 @@ export default function LancamentoItem() {
               <th scope="col">Und. Negócio</th>
               <th scope="col">Pessoa</th>
               <th scope="col">Título</th>
+              <th scope="col">Duplicata</th>
               <th scope="col">Item</th>
               <th scope="col">Centro Custo</th>
               <th scope="col">Tipo Custo</th>
@@ -366,11 +512,11 @@ export default function LancamentoItem() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={12} className="vazio">Carregando...</td>
+                <td colSpan={13} className="vazio">Carregando...</td>
               </tr>
             ) : lancamentos.length === 0 ? (
               <tr>
-                <td colSpan={12} className="vazio">Nenhum Lançamento Cadastrado</td>
+                <td colSpan={13} className="vazio">Nenhum Lançamento Cadastrado</td>
               </tr>
             ) : (
               lancamentos.map((lan) => (
@@ -383,6 +529,7 @@ export default function LancamentoItem() {
                   <td>{lan.und_neg_nome}</td>
                   <td>{lan.pessoa_nome}</td>
                   <td>{lan.titulo}</td>
+                  <td>{lan.duplicata}</td>
                   <td>{lan.item_nome}</td>
                   <td>{lan.centro_custo_nome}</td>
                   <td>{lan.tipo_custo_nome}</td>
@@ -466,7 +613,7 @@ export default function LancamentoItem() {
               valueKey="pessoa_codigo"
               labelKey="pessoa_nome"
               value={pessoaCodigo}
-              onChange={setPessoaCodigo}
+              onChange={handlePessoaChange}
               placeholder="Selecione a pessoa"
             />
           </div>
@@ -475,13 +622,29 @@ export default function LancamentoItem() {
         <div className="linha-modal">
           <div className="campo-modal">
             <label>Título</label>
-            <Input
+            <SelectLista
+              url={urlTitulos}
+              valueKey="titulo"
               value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Deve bater com o título de um Movimento"
+              onChange={handleTituloChange}
+              placeholder={pessoaCodigo ? "Selecione o título" : "Selecione a pessoa primeiro"}
             />
           </div>
 
+          <div className="campo-modal">
+            <label>Duplicata</label>
+            <SelectLista
+              url={urlDuplicatas}
+              valueKey="duplicata"
+              value={duplicata}
+              onChange={setDuplicata}
+              autoSelecionarUnico
+              placeholder={titulo ? "Selecione a duplicata" : "Selecione o título primeiro"}
+            />
+          </div>
+        </div>
+
+        <div className="linha-modal">
           <div className="campo-modal">
             <label>Item</label>
             <SelectBuscaRemota
@@ -493,9 +656,7 @@ export default function LancamentoItem() {
               placeholder="Selecione o item"
             />
           </div>
-        </div>
 
-        <div className="linha-modal">
           <div className="campo-modal">
             <label>Centro de Custo</label>
             <SelectBuscaRemota
@@ -503,11 +664,13 @@ export default function LancamentoItem() {
               valueKey="centro_custo_codigo"
               labelKey="centro_custo_nome"
               value={centroCustoCodigo}
-              onChange={setCentroCustoCodigo}
+              onChange={handleCentroCustoChange}
               placeholder="Selecione o centro de custo"
             />
           </div>
+        </div>
 
+        <div className="linha-modal">
           <div className="campo-modal">
             <label>Tipo de Custo</label>
             <SelectBuscaRemota
@@ -516,12 +679,13 @@ export default function LancamentoItem() {
               labelKey="tipo_custo_nome"
               value={tipoCustoCodigo}
               onChange={setTipoCustoCodigo}
-              placeholder="Selecione o tipo de custo"
+              filtros={{ centro_custo_codigo: centroCustoCodigo }}
+              lookupPorFiltro
+              disabled={!centroCustoCodigo}
+              placeholder={centroCustoCodigo ? "Selecione o tipo de custo" : "Selecione o centro de custo primeiro"}
             />
           </div>
-        </div>
 
-        <div className="linha-modal">
           <div className="campo-modal">
             <label>Evento de Lançamento</label>
             <SelectBuscaRemota
@@ -533,7 +697,9 @@ export default function LancamentoItem() {
               placeholder="Selecione o evento"
             />
           </div>
+        </div>
 
+        <div className="linha-modal">
           <div className="campo-modal">
             <label>Observação</label>
             <Input

@@ -17,7 +17,8 @@ async function proximoCodigo(client, centroCustoCodigo) {
   return r.rows[0].codigo
 }
 
-// Listar todos as paginnas, com busca e ordenação
+// Listar todos as paginnas, com busca, filtros e ordenação
+// Filtros opcionais: ?centro_custo_codigo=18&tipo_custo_codigo=99
 const getAll = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1)
@@ -32,13 +33,30 @@ const getAll = async (req, res) => {
     }
     const orderBy = ordenacoes[req.query.ordenar] || ordenacoes.codigo
 
+    const condicoes = ["tc.tipo_custo_nome ILIKE $1"]
+    const params = [`%${busca}%`]
+
+    const filtroCentro = toIntOrNull(req.query.centro_custo_codigo)
+    if (filtroCentro !== null) {
+      params.push(filtroCentro)
+      condicoes.push(`tc.centro_custo_codigo = $${params.length}`)
+    }
+
+    const filtroCodigo = toIntOrNull(req.query.tipo_custo_codigo)
+    if (filtroCodigo !== null) {
+      params.push(filtroCodigo)
+      condicoes.push(`tc.tipo_custo_codigo = $${params.length}`)
+    }
+
+    const where = condicoes.join(" AND ")
+
     const totalResult = await pool.query(
       `SELECT COUNT(*)
          FROM tipo_custo tc
          JOIN centro_custo cc ON cc.centro_custo_codigo = tc.centro_custo_codigo
          LEFT JOIN carteira c ON c.carteira_codigo = tc.carteira_codigo
-        WHERE tc.tipo_custo_nome ILIKE $1`,
-      [`%${busca}%`]
+        WHERE ${where}`,
+      params
     )
     const total = parseInt(totalResult.rows[0].count)
 
@@ -49,10 +67,10 @@ const getAll = async (req, res) => {
          FROM tipo_custo tc
          JOIN centro_custo cc ON cc.centro_custo_codigo = tc.centro_custo_codigo
          LEFT JOIN carteira c ON c.carteira_codigo = tc.carteira_codigo
-        WHERE tc.tipo_custo_nome ILIKE $1
+        WHERE ${where}
         ORDER BY ${orderBy}
-        LIMIT $2 OFFSET $3`,
-      [`%${busca}%`, limit, offset]
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
     )
 
     res.json({

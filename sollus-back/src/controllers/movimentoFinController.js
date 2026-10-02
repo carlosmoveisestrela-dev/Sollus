@@ -193,4 +193,66 @@ const remove = async (req, res) => {
   }
 }
 
-module.exports = { getAll, getById, create, update, remove }
+const validar = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const mov = await pool.query(
+      `SELECT empresa_codigo, pessoa_codigo, titulo
+         FROM movimento_financeiro
+        WHERE movimento_fin_codigo = $1`,
+      [id]
+    )
+    if (mov.rows.length === 0) {
+      return res.status(404).json({ error: "Movimento não encontrado" })
+    }
+
+    const { empresa_codigo, pessoa_codigo, titulo } = mov.rows[0]
+    const params = [empresa_codigo, pessoa_codigo, titulo]
+
+    const totais = await pool.query(
+      `SELECT
+         COALESCE((SELECT SUM(mf.vlr_duplicata)
+                     FROM movimento_financeiro mf
+                    WHERE mf.empresa_codigo = $1
+                      AND mf.pessoa_codigo = $2
+                      AND mf.titulo = $3), 0) AS total_duplicatas,
+         COALESCE((SELECT SUM(li.vlr_total)
+                     FROM lancamento_item li
+                     JOIN movimento_financeiro mf
+                       ON mf.movimento_fin_codigo = li.movimento_fin_codigo
+                    WHERE mf.empresa_codigo = $1
+                      AND mf.pessoa_codigo = $2
+                      AND mf.titulo = $3), 0) AS total_itens`,
+      params
+    )
+
+    const totalDuplicatas = Number(totais.rows[0].total_duplicatas)
+    const totalItens = Number(totais.rows[0].total_itens)
+
+    // Compara em centavos para evitar erro de ponto flutuante
+    if (Math.round(totalDuplicatas * 100) !== Math.round(totalItens * 100)) {
+      const diferenca = totalDuplicatas - totalItens
+      const fmt = (v) =>
+        v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+      return res.status(400).json({
+        error: `Os valores do título não conferem. Duplicatas: ${fmt(totalDuplicatas)} | Itens: ${fmt(totalItens)} | Diferença: ${fmt(diferenca)}`,
+      })
+    }
+
+    await pool.query(
+      `UPDATE movimento_financeiro
+          SET validado = true
+        WHERE empresa_codigo = $1
+          AND pessoa_codigo = $2
+          AND titulo = $3`,
+      params
+    )
+
+    res.json({ message: "Título validado com sucesso", validado: true })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+module.exports = { getAll, getById, create, update, remove, validar }

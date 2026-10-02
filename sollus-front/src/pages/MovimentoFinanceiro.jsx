@@ -306,10 +306,23 @@ export default function MovimentoFinanceiro() {
         `${API_URL}/movimentofin/${movimentoEdicao.movimento_fin_codigo}/validar`,
         { method: "POST" }
       )
-      const data = await response.json()
+
+      // Lê como texto: se o servidor devolver HTML (ex.: rota inexistente),
+      // não quebra com "Unexpected token '<'".
+      const texto = await response.text()
+      let data = {}
+      try {
+        data = texto ? JSON.parse(texto) : {}
+      } catch {
+        data = {}
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Os valores do título não conferem")
+        const msgPadrao =
+          response.status === 404
+            ? "Rota de validação não encontrada no servidor (404)"
+            : `Erro ${response.status} ao validar o título`
+        throw new Error(data.error || msgPadrao)
       }
 
       message.success("Título validado com sucesso")
