@@ -17,6 +17,7 @@ const CadastroPessoa = React.lazy(() => import("../pages/Cadastros/CadastroPesso
 const CadastroTipoCusto = React.lazy(() => import("../pages/Cadastros/CadastroTipoCusto"))
 const CadastroTipoLancamento = React.lazy(() => import("../pages/Cadastros/CadastroTipoLancamento"))
 const CadastroUniNegocio = React.lazy(() => import("../pages/Cadastros/CadastroUniNegocio"))
+const CadastroGrupo = React.lazy(() => import("../pages/Cadastros/CadastroGrupo"))
 
 export default function AppRoutes() {
   return (
@@ -30,6 +31,7 @@ export default function AppRoutes() {
             <Route path="/cadastro/categoria" element={<CadastroCategoria />} />
             <Route path="/cadastro/centro-custo" element={<CadastroCentroCusto />} />
             <Route path="/cadastro/evento-lancamento" element={<CadastroEventoLancamento />} />
+            <Route path="/cadastro/grupo" element={<CadastroGrupo />} />
             <Route path="/cadastro/item" element={<CadastroItem />} />
             <Route path="/cadastro/origem-lancamento" element={<CadastroOrigemLancamento />} />
             <Route path="/cadastro/pessoa" element={<CadastroPessoa />} />

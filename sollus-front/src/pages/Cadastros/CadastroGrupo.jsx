@@ -1,0 +1,318 @@
+import React, { useState, useEffect } from "react"
+import { Select, Modal, Input, message } from "antd"
+import Layout from "../../layouts/Layout";
+import "../../styles/cadastroEmpresa.css"
+
+const API_URL = import.meta.env.VITE_API_URL
+
+export default function CadastroGrupo() {
+
+  const [form, setForm] = useState({
+    grupo_nome: ""
+  })
+
+  const [busca, setBusca] = useState("")
+  const [grupos, setGrupos] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [pagina, setPagina] = useState(1)
+  const [totalPaginas, setTotalPaginas] = useState(1)
+  const [tamanhoPagina, setTamanhoPagina] = useState(12)
+  const [modalAberto, setModalAberto] = useState(false)
+  const [modoEdicao, setModoEdicao] = useState(false)
+  const [grupoEdicao, setGrupoEdicao] = useState(null)
+  const [nomeEditando, setNomeEditando] = useState("")
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false)
+  const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+
+  function handleChange(e) {
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+  }
+
+  async function buscarGrupos() {
+    setCarregando(true)
+    try {
+      const response = await fetch(
+        `${API_URL}/grupo?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
+      )
+      const data = await response.json()
+      setGrupos(data.dados)
+      setTotalPaginas(data.totalPaginas)
+    } catch (error) {
+      console.error("Erro ao buscar grupos:", error)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  useEffect(() => {
+    buscarGrupos()
+  }, [pagina, tamanhoPagina])
+
+  useEffect(() => {
+    setPagina(1)
+    buscarGrupos()
+  }, [busca])
+
+  function handleTamanhoPaginaChange(valor) {
+    setTamanhoPagina(valor)
+    setPagina(1)
+  }
+
+  const selecionadas = grupos.filter(e => e.selecionada)
+
+  function abrirModalCadastro() {
+    setModoEdicao(false)
+    setGrupoEdicao(null)
+    setNomeEditando("")
+    setModalAberto(true)
+  }
+
+  function abrirModalEdicao(grupo) {
+    setModoEdicao(true)
+    setGrupoEdicao(grupo)
+    setNomeEditando(grupo.grupo_nome)
+    setModalAberto(true)
+  }
+
+  function handleInserirClick(e) {
+    e.preventDefault()
+    if (selecionadas.length === 1) {
+      abrirModalEdicao(selecionadas[0])
+    } else {
+      abrirModalCadastro()
+    }
+  }
+
+  function fecharModalEdicao() {
+    setModalAberto(false)
+    setModoEdicao(false)
+    setGrupoEdicao(null)
+    setNomeEditando("")
+    setForm({ grupo_nome: "" })
+  }
+
+  async function salvarEdicao() {
+    if (!nomeEditando || nomeEditando.trim() === "") {
+      message.warning("O nome do grupo não pode estar vazio.")
+      return
+    }
+
+    setSalvandoEdicao(true)
+    try {
+      const url = modoEdicao
+        ? `${API_URL}/grupo/${grupoEdicao.grupo_codigo}`
+        : `${API_URL}/grupo`
+      const method = modoEdicao ? "PUT" : "POST"
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ grupo_nome: nomeEditando })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        message.success(modoEdicao ? "Grupo atualizado com sucesso!" : "Grupo cadastrado com sucesso!")
+        fecharModalEdicao()
+        buscarGrupos()
+      } else {
+        message.error((modoEdicao ? "Erro ao atualizar grupo: " : "Erro ao cadastrar grupo: ") + data.error)
+      }
+    } catch (error) {
+      console.error("Erro ao salvar grupo:", error)
+      message.error("Não foi possível conectar à API")
+    } finally {
+      setSalvandoEdicao(false)
+    }
+  }
+
+  const [gruposParaExcluir, setGruposParaExcluir] = useState([])
+
+  function abrirModalExcluirDoEdicao() {
+    if (!grupoEdicao) return
+    setGruposParaExcluir([grupoEdicao])
+    setModalExcluirAberto(true)
+  }
+
+  function fecharModalExcluir() {
+    setModalExcluirAberto(false)
+  }
+
+  async function confirmarExclusaoLote() {
+    setExcluindo(true)
+    try {
+      await Promise.all(
+        gruposParaExcluir.map(grupo =>
+          fetch(`${API_URL}/grupo/${grupo.grupo_codigo}`, {
+            method: "DELETE"
+          })
+        )
+      )
+      message.success("Grupo(s) excluído(s) com sucesso!")
+      fecharModalExcluir()
+      fecharModalEdicao()
+      buscarGrupos()
+    } catch (error) {
+      console.error("Erro ao excluir grupos:", error)
+      message.error("Não foi possível conectar à API")
+    } finally {
+      setExcluindo(false)
+    }
+  }
+
+  return (
+    <form className="formulario" onSubmit={handleInserirClick}>
+
+      {/* Grupo */}
+      <h2>Cadastro Grupo</h2>
+
+      <div className="grupo">
+        <div className="campo">
+          <label>Buscar Grupo</label>
+          <div className="search-wrapper">
+            <span className="search-icon"></span>
+            <input
+              type="text"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar Grupo..."
+            />
+            <button type="submit" className="inserir">Inserir</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Listagem de grupos */}
+      <div className="lista-header-controle">
+        <h2>Grupos Cadastrados</h2>
+        <div className="seletor-tamanho">
+          <label>Itens por página:</label>
+          <Select
+            value={tamanhoPagina}
+            onChange={handleTamanhoPaginaChange}
+            options={[
+              { value: 12, label: "12" },
+              { value: 20, label: "20" },
+              { value: 50, label: "50" },
+              { value: 100, label: "100" },
+            ]}
+            style={{ width: 80 }}
+          />
+        </div>
+      </div>
+
+      {/* Lista de grupos */}
+      <div className="lista-empresas">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Nome</th>
+            </tr>
+          </thead>
+          <tbody>
+            {carregando ? (
+              <tr>
+                <td colSpan={2} className="vazio">Carregando...</td>
+              </tr>
+            ) : grupos.length === 0 ? (
+              <tr>
+                <td colSpan={2} className="vazio">Nenhum grupo cadastrado</td>
+              </tr>
+            ) : (
+              grupos.map((grupo) => (
+                <tr
+                  onClick={() => toggleSelecao(grupo.grupo_codigo)}
+                  onDoubleClick={() => abrirModalEdicao(grupo)}
+                  className={`grupo-row${grupo.selecionado ? " selecionado" : ""}`}
+                  key={String(grupo.grupo_codigo)}
+                >
+                  <td className="codigo">{grupo.grupo_codigo}</td>
+                  <td>{grupo.grupo_nome}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        <div className="paginacao">
+          <button
+            type="button"
+            disabled={pagina === 1}
+            onClick={() => setPagina(p => p - 1)}
+          >
+            Anterior
+          </button>
+
+          <span>Página {pagina} de {totalPaginas}</span>
+
+          <button
+            type="button"
+            disabled={pagina === totalPaginas}
+            onClick={() => setPagina(p => p + 1)}
+          >
+            Próxima
+          </button>
+        </div>
+      </div>
+
+      {/* Modal de cadastro/edição */}
+      <Modal
+        title={modoEdicao ? "Editar Grupo" : "Cadastrar Grupo"}
+        open={modalAberto}
+        onCancel={fecharModalEdicao}
+        onOk={salvarEdicao}
+        okText={salvandoEdicao ? "Salvando..." : "Salvar"}
+        cancelText="Cancelar"
+        confirmLoading={salvandoEdicao}
+        footer={(_, { CancelBtn, OkBtn }) => (
+          <div style={{ display: "flex", justifyContent: modoEdicao ? "space-between" : "flex-end", alignItems: "center" }}>
+            {modoEdicao && (
+              <button
+                type="button"
+                className="excluir"
+                onClick={abrirModalExcluirDoEdicao}
+              >
+                Excluir
+              </button>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <CancelBtn />
+              <OkBtn />
+            </div>
+          </div>
+        )}
+      >
+        <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 5 }}>
+          Nome Grupo
+        </label>
+        <Input
+          value={nomeEditando}
+          onChange={(e) => setNomeEditando(e.target.value)}
+          placeholder="Nome do Grupo"
+          onPressEnter={salvarEdicao}
+        />
+      </Modal>
+
+      {/* Modal de confirmação de exclusão em lote */}
+      <Modal
+        title="Confirmação"
+        open={modalExcluirAberto}
+        onCancel={fecharModalExcluir}
+        onOk={confirmarExclusaoLote}
+        okText="Excluir"
+        cancelText="Cancelar"
+        confirmLoading={excluindo}
+        okButtonProps={{ danger: true }}
+      >
+        <p>Tem certeza que deseja excluir esse grupo?</p>
+      </Modal>
+
+    </form>
+  )
+}

@@ -12,6 +12,7 @@ import {
   TagOutlined,
   BankOutlined,
   UnorderedListOutlined,
+  TeamOutlined,
   ImportOutlined,
   UserOutlined,
   SwapOutlined,
@@ -92,6 +93,12 @@ export default function Sidebar() {
           key: "/cadastro/categoria",
           icon: <TagOutlined />,
           label: "Categoria"
+        },
+
+        {
+          key: "/cadastro/grupo",
+          icon: <TeamOutlined />,
+          label: "Grupo"
         },
 
         {
