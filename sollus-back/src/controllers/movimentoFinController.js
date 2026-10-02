@@ -123,8 +123,22 @@ const create = async (req, res) => {
   }
 }
 
+// Helper: invalida todas as linhas do título (use também nos itens)
+const invalidarTitulo = async (client, empresa_codigo, pessoa_codigo, titulo) => {
+  await client.query(
+    `UPDATE movimento_financeiro
+        SET validado = false
+      WHERE empresa_codigo = $1
+        AND pessoa_codigo = $2
+        AND titulo = $3
+        AND validado = true`,
+    [empresa_codigo, pessoa_codigo, titulo]
+  )
+}
+
 // Atualizar
 const update = async (req, res) => {
+  const client = await pool.connect()
   try {
     const { id } = req.params
     const erro = validarCampos(req.body)
@@ -143,7 +157,22 @@ const update = async (req, res) => {
       dt_pagamento,
     } = req.body
 
-    const result = await pool.query(
+    await client.query("BEGIN")
+
+    // Chave antiga (antes da edição), para invalidar o grupo de origem
+    const antigo = await client.query(
+      `SELECT empresa_codigo, pessoa_codigo, titulo
+         FROM movimento_financeiro
+        WHERE movimento_fin_codigo = $1
+        FOR UPDATE`,
+      [id]
+    )
+    if (antigo.rows.length === 0) {
+      await client.query("ROLLBACK")
+      return res.status(404).json({ error: "Não encontrado" })
+    }
+
+    const result = await client.query(
       `UPDATE movimento_financeiro
        SET empresa_codigo = $1,
            pessoa_codigo = $2,
@@ -171,10 +200,27 @@ const update = async (req, res) => {
         id,
       ]
     )
-    if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
-    res.json(result.rows[0])
+
+    // Invalida o grupo antigo (perdeu uma duplicata, se a chave mudou)
+    const a = antigo.rows[0]
+    await invalidarTitulo(client, a.empresa_codigo, a.pessoa_codigo, a.titulo)
+
+    // Invalida o grupo novo (inclui a própria linha editada)
+    await invalidarTitulo(client, empresa_codigo, pessoa_codigo, titulo)
+
+    await client.query("COMMIT")
+
+    // Retorna a linha já com validado atualizado
+    const atualizado = await pool.query(
+      `SELECT * FROM movimento_financeiro WHERE movimento_fin_codigo = $1`,
+      [id]
+    )
+    res.json(atualizado.rows[0])
   } catch (error) {
+    await client.query("ROLLBACK")
     res.status(500).json({ error: error.message })
+  } finally {
+    client.release()
   }
 }
 
@@ -193,6 +239,7 @@ const remove = async (req, res) => {
   }
 }
 
+// Validar
 const validar = async (req, res) => {
   try {
     const { id } = req.params
