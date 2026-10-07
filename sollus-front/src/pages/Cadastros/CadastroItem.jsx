@@ -10,7 +10,9 @@ export default function CadastroItem() {
   const [busca, setBusca] = useState("")
   const [itens, setItens] = useState([])
   const [categorias, setCategorias] = useState([])
+  const [grupos, setGrupos] = useState([]) // NOVO: lista de grupos para o select
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null)
+  const [grupoSelecionado, setGrupoSelecionado] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
@@ -31,6 +33,12 @@ export default function CadastroItem() {
         `${API_URL}/item?page=${pagina}&limit=${tamanhoPagina}&busca=${encodeURIComponent(busca)}`
       )
       const data = await response.json()
+      if (!response.ok) {
+        console.error("Erro da API:", data.error)
+        message.error("Erro ao buscar itens: " + data.error)
+        setItens([])
+        return
+      }
       setItens(data.dados ?? [])
       setTotalPaginas(data.totalPaginas ?? 1)
     } catch (error) {
@@ -42,7 +50,7 @@ export default function CadastroItem() {
     }
   }
 
-  // Busca a lista de categorias só quando o modal abre, para popular o select
+  // Busca categorias e grupos só quando o modal abre, para popular os selects
   useEffect(() => {
     if (modalAberto) {
       fetch(`${API_URL}/categoria?limit=1000`)
@@ -52,6 +60,16 @@ export default function CadastroItem() {
           console.error("Erro ao buscar categorias:", error)
           setCategorias([])
           message.error("Não foi possível carregar as categorias")
+        })
+
+      // NOVO: mesma lógica, mas para o endpoint de grupo
+      fetch(`${API_URL}/grupo?limit=1000`)
+        .then((res) => res.json())
+        .then((data) => setGrupos(data.dados ?? []))
+        .catch((error) => {
+          console.error("Erro ao buscar grupos:", error)
+          setGrupos([])
+          message.error("Não foi possível carregar os grupos")
         })
     }
   }, [modalAberto])
@@ -76,6 +94,7 @@ export default function CadastroItem() {
     setNomeEditando("")
     setUndEditando("")
     setCategoriaSelecionada(null)
+    setGrupoSelecionado(null)
     setModalAberto(true)
   }
 
@@ -85,6 +104,7 @@ export default function CadastroItem() {
     setNomeEditando(item.item_nome)
     setUndEditando(item.item_und ?? "")
     setCategoriaSelecionada(item.categoria_codigo ?? null)
+    setGrupoSelecionado(item.grupo_codigo ?? null)
     setModalAberto(true)
   }
 
@@ -99,6 +119,7 @@ export default function CadastroItem() {
     setItemEdicao(null)
     setNomeEditando("")
     setUndEditando("")
+    setGrupoSelecionado(null)
     setCategoriaSelecionada(null)
   }
 
@@ -110,6 +131,12 @@ export default function CadastroItem() {
 
     if (!undEditando || undEditando.trim() === "") {
       message.warning("A unidade do item não pode estar vazia.")
+      return
+    }
+
+    // NOVO: o backend exige grupo, então validamos aqui também
+    if (!grupoSelecionado) {
+      message.warning("Selecione um grupo.")
       return
     }
 
@@ -133,7 +160,8 @@ export default function CadastroItem() {
         body: JSON.stringify({
           item_nome: nomeEditando,
           item_und: undEditando,
-          categoria_codigo: categoriaSelecionada
+          categoria_codigo: categoriaSelecionada,
+          grupo_codigo: grupoSelecionado
         })
       })
 
@@ -231,17 +259,18 @@ export default function CadastroItem() {
               <th scope="col">Código</th>
               <th scope="col">Nome</th>
               <th scope="col">Unidade</th>
+              <th scope="col">Grupo</th>
               <th scope="col">Categoria</th>
             </tr>
           </thead>
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={4} className="vazio">Carregando...</td>
+                <td colSpan={5} className="vazio">Carregando...</td>
               </tr>
             ) : itens.length === 0 ? (
               <tr>
-                <td colSpan={4} className="vazio">Nenhum item cadastrado</td>
+                <td colSpan={5} className="vazio">Nenhum item cadastrado</td>
               </tr>
             ) : (
               itens.map((item) => (
@@ -253,6 +282,7 @@ export default function CadastroItem() {
                   <td className="codigo">{item.item_codigo}</td>
                   <td>{item.item_nome}</td>
                   <td>{item.item_und}</td>
+                  <td>{item.grupo_nome}</td>
                   <td>{item.categoria_nome}</td>
                 </tr>
               ))
@@ -326,6 +356,21 @@ export default function CadastroItem() {
           onChange={(e) => setUndEditando(e.target.value)}
           placeholder="Ex: UN, KG, L, CX"
           onPressEnter={salvarEdicao}
+        />
+
+        {/* ALTERADO: agora usa grupos / grupoSelecionado / setGrupoSelecionado */}
+        <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>
+          Grupo
+        </label>
+        <Select
+          style={{ width: "100%" }}
+          value={grupoSelecionado}
+          onChange={setGrupoSelecionado}
+          placeholder="Selecione o grupo"
+          options={grupos.map((g) => ({
+            value: g.grupo_codigo,
+            label: g.grupo_nome,
+          }))}
         />
 
         <label style={{ fontSize: 12, color: "#555", display: "block", marginTop: 12, marginBottom: 5 }}>

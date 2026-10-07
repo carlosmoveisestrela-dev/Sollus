@@ -14,10 +14,12 @@ const getAll = async (req, res) => {
     )
     const total = parseInt(totalResult.rows[0].count)
 
+    // ALTERADO: adicionado o JOIN com grupo e o campo g.grupo_nome
     const result = await pool.query(
-      `SELECT i.*, c.categoria_nome
+      `SELECT i.*, c.categoria_nome, g.grupo_nome
        FROM item i
        LEFT JOIN categoria c ON c.categoria_codigo = i.categoria_codigo
+       LEFT JOIN grupo g ON g.grupo_codigo = i.grupo_codigo
        WHERE i.item_nome ILIKE $1
        ORDER BY i.item_codigo
        LIMIT $2 OFFSET $3`,
@@ -49,7 +51,7 @@ const getById = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { item_nome, item_und, categoria_codigo } = req.body
+    const { item_nome, item_und, categoria_codigo, grupo_codigo } = req.body
 
     if (!item_nome || item_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do item é obrigatório.' })
@@ -60,13 +62,16 @@ const create = async (req, res) => {
     if (!categoria_codigo) {
       return res.status(400).json({ error: 'Categoria é obrigatória.' })
     }
+    if (!grupo_codigo) {
+      return res.status(400).json({ error: 'Grupo é obrigatório.' })
+    }
 
     const nomeFormatado = item_nome.trim().toUpperCase()
     const undFormatada = item_und.trim().toUpperCase()
 
     const result = await pool.query(
-      "INSERT INTO item (item_nome, item_und, categoria_codigo) VALUES ($1, $2, $3) RETURNING *",
-      [nomeFormatado, undFormatada, categoria_codigo]
+      "INSERT INTO item (item_nome, item_und, categoria_codigo, grupo_codigo) VALUES ($1, $2, $3, $4) RETURNING *",
+      [nomeFormatado, undFormatada, categoria_codigo, grupo_codigo]
     )
 
     res.status(201).json(result.rows[0])
@@ -79,7 +84,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const { item_nome, item_und, categoria_codigo } = req.body
+    const { item_nome, item_und, categoria_codigo, grupo_codigo } = req.body
 
     if (!item_nome || item_nome.trim() === '') {
       return res.status(400).json({ error: 'Nome do item é obrigatório.' })
@@ -90,13 +95,16 @@ const update = async (req, res) => {
     if (!categoria_codigo) {
       return res.status(400).json({ error: 'Categoria é obrigatória.' })
     }
+    if (!grupo_codigo) {
+      return res.status(400).json({ error: 'Grupo é obrigatório.' })
+    }
 
     const nomeFormatado = item_nome.trim().toUpperCase()
     const undFormatada = item_und.trim().toUpperCase()
 
     const result = await pool.query(
-      "UPDATE item SET item_nome = $1, item_und = $2, categoria_codigo = $3 WHERE item_codigo = $4 RETURNING *",
-      [nomeFormatado, undFormatada, categoria_codigo, id]
+      "UPDATE item SET item_nome = $1, item_und = $2, categoria_codigo = $3, grupo_codigo = $4 WHERE item_codigo = $5 RETURNING *",
+      [nomeFormatado, undFormatada, categoria_codigo, grupo_codigo, id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
     res.json(result.rows[0])
