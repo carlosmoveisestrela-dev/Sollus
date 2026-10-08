@@ -22,84 +22,19 @@ function validarCampos(body) {
   return null
 }
 
-// Busca o movimento_fin_codigo correspondente a pessoa_codigo + titulo (+ duplicata).
-// Se o título tiver mais de uma duplicata e ela não for informada, lança erro.
+// Busca o movimento_fin_codigo correspondente a pessoa_codigo + titulo.
 // Lança erro com mensagem amigável se não encontrar.
-async function resolverMovimentoFinCodigo(pessoa_codigo, titulo, duplicata) {
-  const params = [pessoa_codigo, titulo]
-  let sql =
-    "SELECT movimento_fin_codigo FROM movimento_financeiro WHERE pessoa_codigo = $1 AND titulo = $2"
-
-  if (duplicata) {
-    params.push(duplicata)
-    sql += " AND duplicata = $3"
-  }
-
-  sql += " ORDER BY movimento_fin_codigo"
-
-  const result = await pool.query(sql, params)
-
+async function resolverMovimentoFinCodigo(pessoa_codigo, titulo) {
+  const result = await pool.query(
+    "SELECT movimento_fin_codigo FROM movimento_financeiro WHERE pessoa_codigo = $1 AND titulo = $2",
+    [pessoa_codigo, titulo]
+  )
   if (result.rows.length === 0) {
-    const erro = new Error("Nenhum movimento encontrado para essa Pessoa/Título/Duplicata")
+    const erro = new Error("Nenhum movimento encontrado para essa Pessoa/Título")
     erro.status = 400
     throw erro
   }
-
-  if (result.rows.length > 1) {
-    const erro = new Error("Esse título possui mais de uma duplicata. Informe a duplicata.")
-    erro.status = 400
-    throw erro
-  }
-
   return result.rows[0].movimento_fin_codigo
-}
-
-// Listar títulos distintos do movimento financeiro de uma pessoa
-// GET /titulos?pessoa_codigo=123
-const getTitulos = async (req, res) => {
-  try {
-    const { pessoa_codigo } = req.query
-    if (!pessoa_codigo) {
-      return res.status(400).json({ error: 'O parâmetro "pessoa_codigo" é obrigatório.' })
-    }
-
-    const result = await pool.query(
-      `SELECT DISTINCT titulo
-       FROM movimento_financeiro
-       WHERE pessoa_codigo = $1
-       ORDER BY titulo`,
-      [pessoa_codigo]
-    )
-
-    res.json(result.rows)
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
-}
-
-// Listar duplicatas de um título
-// GET /duplicatas?pessoa_codigo=123&titulo=mo-153
-const getDuplicatas = async (req, res) => {
-  try {
-    const { pessoa_codigo, titulo } = req.query
-    if (!pessoa_codigo || !titulo) {
-      return res
-        .status(400)
-        .json({ error: 'Os parâmetros "pessoa_codigo" e "titulo" são obrigatórios.' })
-    }
-
-    const result = await pool.query(
-      `SELECT movimento_fin_codigo, duplicata
-       FROM movimento_financeiro
-       WHERE pessoa_codigo = $1 AND titulo = $2
-       ORDER BY movimento_fin_codigo`,
-      [pessoa_codigo, titulo]
-    )
-
-    res.json(result.rows)
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
 }
 
 // Listar todos
@@ -116,9 +51,11 @@ const getAll = async (req, res) => {
     )
     const total = parseInt(totalResult.rows[0].count)
 
+    // CORREÇÃO: o JOIN com tipo_custo agora também usa centro_custo_codigo.
+    // Sem isso, o mesmo tipo_custo_codigo existe em vários centros de custo
+    // e o JOIN duplicava o lançamento (uma linha para cada centro).
     const result = await pool.query(
       `SELECT li.*,
-              mf.duplicata,
               un.und_neg_nome,
               p.pessoa_nome,
               i.item_nome,
@@ -126,13 +63,12 @@ const getAll = async (req, res) => {
               tc.tipo_custo_nome,
               el.evento_lancamento_nome
        FROM lancamento_item li
-       LEFT JOIN movimento_financeiro mf ON mf.movimento_fin_codigo = li.movimento_fin_codigo
        JOIN uni_negocio un ON un.und_neg_codigo = li.und_neg_codigo
        JOIN pessoa p ON p.pessoa_codigo = li.pessoa_codigo
        JOIN item i ON i.item_codigo = li.item_codigo
        JOIN centro_custo cc ON cc.centro_custo_codigo = li.centro_custo_codigo
-       JOIN tipo_custo tc ON tc.centro_custo_codigo = li.centro_custo_codigo
-                         AND tc.tipo_custo_codigo = li.tipo_custo_codigo
+       JOIN tipo_custo tc ON tc.tipo_custo_codigo = li.tipo_custo_codigo
+                         AND tc.centro_custo_codigo = li.centro_custo_codigo
        JOIN evento_lancamento el ON el.evento_lancamento_codigo = li.evento_lancamento_codigo
        WHERE li.titulo ILIKE $1
        ORDER BY li.lancamento_item_codigo
@@ -151,15 +87,38 @@ const getAll = async (req, res) => {
   }
 }
 
+// Tipos de custo vinculados a UM centro de custo (alimenta o dropdown do lançamento).
+// GET /lancamento-item/tipos-custo?centro_custo_codigo=10&busca=texto
+// Devolve { dados: [...] } no mesmo formato usado pelos outros dropdowns.
+const getTiposCustoPorCentro = async (req, res) => {
+  try {
+    const { centro_custo_codigo } = req.query
+    const busca = req.query.busca || ""
+
+    // Sem centro escolhido, não há o que listar
+    if (!centro_custo_codigo) return res.json({ dados: [] })
+
+    const result = await pool.query(
+      `SELECT tipo_custo_codigo, tipo_custo_nome
+       FROM tipo_custo
+       WHERE centro_custo_codigo = $1
+         AND tipo_custo_nome ILIKE $2
+       ORDER BY tipo_custo_nome`,
+      [centro_custo_codigo, `%${busca}%`]
+    )
+
+    res.json({ dados: result.rows })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
 // Buscar por código
 const getById = async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(
-      `SELECT li.*, mf.duplicata
-       FROM lancamento_item li
-       LEFT JOIN movimento_financeiro mf ON mf.movimento_fin_codigo = li.movimento_fin_codigo
-       WHERE li.lancamento_item_codigo = $1`,
+      "SELECT * FROM lancamento_item WHERE lancamento_item_codigo = $1",
       [id]
     )
     if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
@@ -178,7 +137,6 @@ const create = async (req, res) => {
       und_neg_codigo,
       pessoa_codigo,
       titulo,
-      duplicata,
       item_codigo,
       centro_custo_codigo,
       tipo_custo_codigo,
@@ -189,7 +147,7 @@ const create = async (req, res) => {
       vlr_frete_unitario,
     } = req.body
 
-    const movimento_fin_codigo = await resolverMovimentoFinCodigo(pessoa_codigo, titulo, duplicata)
+    const movimento_fin_codigo = await resolverMovimentoFinCodigo(pessoa_codigo, titulo)
 
     const frete = vlr_frete_unitario || 0
     const vlr_total = Number(quant) * (Number(vlr_unit) + Number(frete))
@@ -235,7 +193,6 @@ const update = async (req, res) => {
       und_neg_codigo,
       pessoa_codigo,
       titulo,
-      duplicata,
       item_codigo,
       centro_custo_codigo,
       tipo_custo_codigo,
@@ -246,7 +203,7 @@ const update = async (req, res) => {
       vlr_frete_unitario,
     } = req.body
 
-    const movimento_fin_codigo = await resolverMovimentoFinCodigo(pessoa_codigo, titulo, duplicata)
+    const movimento_fin_codigo = await resolverMovimentoFinCodigo(pessoa_codigo, titulo)
 
     const frete = vlr_frete_unitario || 0
     const vlr_total = Number(quant) * (Number(vlr_unit) + Number(frete))
@@ -307,4 +264,4 @@ const remove = async (req, res) => {
   }
 }
 
-module.exports = { getTitulos, getDuplicatas, getAll, getById, create, update, remove }
+module.exports = { getAll, getById, getTiposCustoPorCentro, create, update, remove }
