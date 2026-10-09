@@ -283,16 +283,25 @@ export default function MovimentoFinanceiro() {
     if (!movimentoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`${API_URL}/movimentofin/${movimentoEdicao.movimento_fin_codigo}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        `${API_URL}/movimentofin/${movimentoEdicao.movimento_fin_codigo}`,
+        { method: "DELETE" }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao excluir movimento")
+      }
+
       message.success("Movimento excluído com sucesso")
       fecharModalExcluir()
       fecharModalEdicao()
       buscarMovimentos()
     } catch (error) {
       console.error("Erro ao excluir movimento:", error)
-      message.error("Não foi possível excluir o movimento")
+      message.error(error.message || "Não foi possível excluir o movimento")
+      fecharModalExcluir()
     } finally {
       setExcluindo(false)
     }
@@ -307,8 +316,6 @@ export default function MovimentoFinanceiro() {
         { method: "POST" }
       )
 
-      // Lê como texto: se o servidor devolver HTML (ex.: rota inexistente),
-      // não quebra com "Unexpected token '<'".
       const texto = await response.text()
       let data = {}
       try {

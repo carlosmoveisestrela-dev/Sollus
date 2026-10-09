@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { Select, Modal, Input, InputNumber, message } from "antd"
+import { Select, Modal, Input, message, DatePicker } from "antd"
+import dayjs from "dayjs"
 import { InputMascaraDigitos } from "../components/InputMascaraDigitos"
-import Layout from "../layouts/Layout";
 import "../styles/lancamentoItem.css"
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -48,10 +48,6 @@ function montarQuery(texto, filtros) {
   return params.toString()
 }
 
-// filtros: filtros extras enviados na listagem (ex.: { centro_custo_codigo: 18 }).
-// lookupPorFiltro: quando true, o item selecionado é buscado pela listagem
-//   (filtros + valueKey=value) em vez de GET /endpoint/:value.
-//   Necessário quando o valueKey não é a PK da tabela (ex.: tipo-custo).
 function SelectBuscaRemota({
   endpoint,
   valueKey,
@@ -95,8 +91,8 @@ function SelectBuscaRemota({
 
     const requisicao = lookupPorFiltro
       ? fetch(`${API_URL}/${endpoint}?${montarQuery("", { ...filtros, [valueKey]: value })}`)
-          .then((res) => res.json())
-          .then((data) => data.dados?.[0] ?? null)
+        .then((res) => res.json())
+        .then((data) => data.dados?.[0] ?? null)
       : fetch(`${API_URL}/${endpoint}/${value}`).then((res) => res.json())
 
     requisicao
@@ -110,7 +106,7 @@ function SelectBuscaRemota({
     return () => {
       cancelado = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [value, endpoint, filtrosKey, lookupPorFiltro, valueKey])
 
   useEffect(() => {
@@ -119,7 +115,6 @@ function SelectBuscaRemota({
       return
     }
     buscar("")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtrosKey, disabled])
 
   const options = opcoes.map((item) => ({
@@ -148,10 +143,7 @@ function SelectBuscaRemota({
   )
 }
 
-// Select que carrega uma lista simples (sem paginação) de uma URL.
-// Se `url` for null, fica desabilitado (dependência ainda não escolhida).
-// Com `autoSelecionarUnico`, escolhe sozinho quando só existe uma opção.
-function SelectLista({ url, valueKey, value, onChange, placeholder, autoSelecionarUnico }) {
+function SelectLista({ url, valueKey, value, onChange, onSelecionarLinha, placeholder, autoSelecionarUnico }) {
   const [linhas, setLinhas] = useState([])
   const [carregando, setCarregando] = useState(false)
 
@@ -165,15 +157,25 @@ function SelectLista({ url, valueKey, value, onChange, placeholder, autoSelecion
     setCarregando(true)
 
     fetch(url)
-      .then((res) => res.json())
+      .then(async (res) => {
+        const data = await res.json()
+        // Se o backend devolveu erro (500, 400...), lança para cair no catch
+        // e mostrar a mensagem real no console.
+        if (!res.ok) throw new Error(data.error || "Erro ao buscar lista")
+        return data
+      })
       .then((data) => {
         if (cancelado) return
-        const lista = Array.isArray(data) ? data : []
+        // O backend responde { dados: [...] }; aceitamos também um array puro.
+        const lista = Array.isArray(data) ? data : (data.dados ?? [])
         setLinhas(lista)
 
         if (autoSelecionarUnico) {
           const validas = lista.filter((l) => l[valueKey])
-          if (validas.length === 1) onChange(validas[0][valueKey])
+          if (validas.length === 1) {
+            onChange(validas[0][valueKey])
+            onSelecionarLinha?.(validas[0])
+          }
         }
       })
       .catch((error) => {
@@ -187,15 +189,19 @@ function SelectLista({ url, valueKey, value, onChange, placeholder, autoSelecion
     return () => {
       cancelado = true
     }
-    // onChange propositalmente fora das dependências
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, valueKey, autoSelecionarUnico])
+
+  // Ao escolher (ou limpar) uma opção, avisa o pai com a linha inteira,
+  // para ele poder usar outras colunas (ex.: dt_emissao).
+  function handleChange(valor) {
+    onChange(valor)
+    onSelecionarLinha?.(linhas.find((l) => l[valueKey] === valor) ?? null)
+  }
 
   const options = linhas
     .filter((l) => l[valueKey])
     .map((l) => ({ value: l[valueKey], label: l[valueKey] }))
 
-  // Garante que o valor atual apareça mesmo se não veio na lista
   if (value && !options.some((o) => o.value === value)) {
     options.unshift({ value, label: value })
   }
@@ -204,7 +210,7 @@ function SelectLista({ url, valueKey, value, onChange, placeholder, autoSelecion
     <Select
       style={{ width: "100%" }}
       value={value ?? undefined}
-      onChange={onChange}
+      onChange={handleChange}
       placeholder={placeholder}
       disabled={!url}
       showSearch
@@ -231,7 +237,7 @@ export default function LancamentoItem() {
   const [salvandoEdicao, setSalvandoEdicao] = useState(false)
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
-
+  const [dtEmissao, setDtEmissao] = useState(null)
   const [undNegCodigo, setUndNegCodigo] = useState(null)
   const [pessoaCodigo, setPessoaCodigo] = useState(null)
   const [titulo, setTitulo] = useState(null)
@@ -288,6 +294,31 @@ export default function LancamentoItem() {
     buscarLancamentos()
   }, [buscar])
 
+  // Sempre que pessoa + título + duplicata estiverem definidos, busca a
+  // dt_emissao do movimento correspondente a essa duplicata.
+  useEffect(() => {
+    if (!urlDuplicatas || !duplicata) return
+
+    let cancelado = false
+
+    fetch(urlDuplicatas)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelado) return
+        const linha = (data.dados ?? []).find(
+          (l) => String(l.duplicata) === String(duplicata)
+        )
+        // Log temporário para depuração: remova depois que funcionar.
+        console.log("Duplicata escolhida:", duplicata, "-> linha encontrada:", linha)
+        setDtEmissao(linha?.dt_emissao ?? null)
+      })
+      .catch((error) => console.error("Erro ao buscar dt_emissao:", error))
+
+    return () => {
+      cancelado = true
+    }
+  }, [urlDuplicatas, duplicata])
+
   function handleTamanhoPaginaChange(valor) {
     setTamanhoPagina(valor)
     setPagina(1)
@@ -297,15 +328,20 @@ export default function LancamentoItem() {
     setPessoaCodigo(valor)
     setTitulo(null)
     setDuplicata(null)
+    setDtEmissao(null)
   }
 
   function handleTituloChange(valor) {
     setTitulo(valor ?? null)
     setDuplicata(null)
+    setDtEmissao(null)
   }
 
-  // O código do tipo de custo só faz sentido dentro de um centro de custo,
-  // então trocar o centro limpa o tipo selecionado.
+  // Quando a duplicata muda, a data de emissão vem da linha escolhida.
+  function handleDuplicataSelecionada(linha) {
+    setDtEmissao(linha?.dt_emissao ?? null)
+  }
+
   function handleCentroCustoChange(valor) {
     setCentroCustoCodigo(valor ?? null)
     setTipoCustoCodigo(null)
@@ -316,6 +352,7 @@ export default function LancamentoItem() {
     setPessoaCodigo(null)
     setTitulo(null)
     setDuplicata(null)
+    setDtEmissao(null)
     setItemCodigo(null)
     setCentroCustoCodigo(null)
     setTipoCustoCodigo(null)
@@ -348,6 +385,7 @@ export default function LancamentoItem() {
     setQuant(Number(lancamento.quant) || 0)
     setVlrUnit(Number(lancamento.vlr_unit) || 0)
     setVlrFrete(Number(lancamento.vlr_frete_unitario) || 0)
+    setDtEmissao(lancamento.dt_emissao || null)
     setModalAberto(true)
   }
 
@@ -404,6 +442,7 @@ export default function LancamentoItem() {
           quant,
           vlr_unit: vlrUnit,
           vlr_frete_unitario: vlrFrete,
+          dt_emissao: dtEmissao,
         }),
       })
 
@@ -437,16 +476,21 @@ export default function LancamentoItem() {
     if (!lancamentoEdicao) return
     setExcluindo(true)
     try {
-      await fetch(`${API_URL}/lancamento-item/${lancamentoEdicao.lancamento_item_codigo}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        `${API_URL}/lancamento-item/${lancamentoEdicao.lancamento_item_codigo}`,
+        { method: "DELETE" }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao excluir lançamento")
+      }
       message.success("Lançamento excluído com sucesso")
       fecharModalExcluir()
       fecharModalEdicao()
       buscarLancamentos()
     } catch (error) {
       console.error("Erro ao excluir lançamento:", error)
-      message.error("Não foi possível excluir o lançamento")
+      message.error(error.message || "Não foi possível excluir o lançamento")
     } finally {
       setExcluindo(false)
     }
@@ -499,6 +543,7 @@ export default function LancamentoItem() {
               <th scope="col">Pessoa</th>
               <th scope="col">Título</th>
               <th scope="col">Duplicata</th>
+              <th scope="col">Dt. Emissão</th>
               <th scope="col">Item</th>
               <th scope="col">Centro Custo</th>
               <th scope="col">Tipo Custo</th>
@@ -512,11 +557,11 @@ export default function LancamentoItem() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={13} className="vazio">Carregando...</td>
+                <td colSpan={14} className="vazio">Carregando...</td>
               </tr>
             ) : lancamentos.length === 0 ? (
               <tr>
-                <td colSpan={13} className="vazio">Nenhum Lançamento Cadastrado</td>
+                <td colSpan={14} className="vazio">Nenhum Lançamento Cadastrado</td>
               </tr>
             ) : (
               lancamentos.map((lan) => (
@@ -530,6 +575,7 @@ export default function LancamentoItem() {
                   <td>{lan.pessoa_nome}</td>
                   <td>{lan.titulo}</td>
                   <td>{lan.duplicata}</td>
+                  <td>{lan.dt_emissao ? dayjs(lan.dt_emissao).format("DD/MM/YYYY") : ""}</td>
                   <td>{lan.item_nome}</td>
                   <td>{lan.centro_custo_nome}</td>
                   <td>{lan.tipo_custo_nome}</td>
@@ -638,6 +684,7 @@ export default function LancamentoItem() {
               valueKey="duplicata"
               value={duplicata}
               onChange={setDuplicata}
+              onSelecionarLinha={handleDuplicataSelecionada}
               autoSelecionarUnico
               placeholder={titulo ? "Selecione a duplicata" : "Selecione o título primeiro"}
             />
@@ -654,6 +701,17 @@ export default function LancamentoItem() {
               value={itemCodigo}
               onChange={setItemCodigo}
               placeholder="Selecione o item"
+            />
+          </div>
+
+          <div className="campo-modal">
+            <label>Dt. Emissão</label>
+            <DatePicker
+              style={{ width: "100%" }}
+              value={dtEmissao ? dayjs(dtEmissao) : null}
+              format="DD/MM/YYYY"
+              placeholder="Emissão"
+              disabled
             />
           </div>
 

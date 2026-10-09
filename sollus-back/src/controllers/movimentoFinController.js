@@ -79,6 +79,7 @@ const getById = async (req, res) => {
   }
 }
 
+// Criar
 const create = async (req, res) => {
   try {
     const erro = validarCampos(req.body)
@@ -123,7 +124,6 @@ const create = async (req, res) => {
   }
 }
 
-// Helper: invalida todas as linhas do título (use também nos itens)
 const invalidarTitulo = async (client, empresa_codigo, pessoa_codigo, titulo) => {
   await client.query(
     `UPDATE movimento_financeiro
@@ -159,9 +159,8 @@ const update = async (req, res) => {
 
     await client.query("BEGIN")
 
-    // Chave antiga (antes da edição), para invalidar o grupo de origem
     const antigo = await client.query(
-      `SELECT empresa_codigo, pessoa_codigo, titulo
+      `SELECT empresa_codigo, pessoa_codigo, titulo, vlr_duplicata
          FROM movimento_financeiro
         WHERE movimento_fin_codigo = $1
         FOR UPDATE`,
@@ -201,16 +200,29 @@ const update = async (req, res) => {
       ]
     )
 
-    // Invalida o grupo antigo (perdeu uma duplicata, se a chave mudou)
+    // Só invalida se algo que afeta a validação realmente mudou
     const a = antigo.rows[0]
-    await invalidarTitulo(client, a.empresa_codigo, a.pessoa_codigo, a.titulo)
 
-    // Invalida o grupo novo (inclui a própria linha editada)
-    await invalidarTitulo(client, empresa_codigo, pessoa_codigo, titulo)
+    const chaveMudou =
+      Number(a.empresa_codigo) !== Number(empresa_codigo) ||
+      Number(a.pessoa_codigo) !== Number(pessoa_codigo) ||
+      String(a.titulo) !== String(titulo)
+
+    const valorMudou =
+      Math.round(Number(a.vlr_duplicata || 0) * 100) !==
+      Math.round(Number(vlr_duplicata || 0) * 100)
+
+    if (chaveMudou) {
+      // grupo antigo perdeu uma duplicata e o novo ganhou uma
+      await invalidarTitulo(client, a.empresa_codigo, a.pessoa_codigo, a.titulo)
+      await invalidarTitulo(client, empresa_codigo, pessoa_codigo, titulo)
+    } else if (valorMudou) {
+      // mesmo grupo, mas a soma das duplicatas mudou
+      await invalidarTitulo(client, empresa_codigo, pessoa_codigo, titulo)
+    }
 
     await client.query("COMMIT")
 
-    // Retorna a linha já com validado atualizado
     const atualizado = await pool.query(
       `SELECT * FROM movimento_financeiro WHERE movimento_fin_codigo = $1`,
       [id]
@@ -224,18 +236,62 @@ const update = async (req, res) => {
   }
 }
 
-// Deletar
+// Excluir
 const remove = async (req, res) => {
+  const client = await pool.connect()
   try {
     const { id } = req.params
-    const result = await pool.query(
-      "DELETE FROM movimento_financeiro WHERE movimento_fin_codigo = $1 RETURNING *",
+
+    await client.query("BEGIN")
+
+    const existente = await client.query(
+      `SELECT empresa_codigo, pessoa_codigo, titulo
+         FROM movimento_financeiro
+        WHERE movimento_fin_codigo = $1
+        FOR UPDATE`,
       [id]
     )
-    if (result.rows.length === 0) return res.status(404).json({ error: "Não encontrado" })
+    if (existente.rows.length === 0) {
+      await client.query("ROLLBACK")
+      return res.status(404).json({ error: "Não encontrado" })
+    }
+
+    // Bloqueia se existirem lançamentos ligados a este movimento
+    const vinculados = await client.query(
+      "SELECT COUNT(*) FROM lancamento_item WHERE movimento_fin_codigo = $1",
+      [id]
+    )
+    const qtd = parseInt(vinculados.rows[0].count)
+    if (qtd > 0) {
+      await client.query("ROLLBACK")
+      return res.status(409).json({
+        error: `Este movimento possui ${qtd} lançamento(s) vinculado(s). Exclua os lançamentos primeiro.`,
+      })
+    }
+
+    await client.query(
+      "DELETE FROM movimento_financeiro WHERE movimento_fin_codigo = $1",
+      [id]
+    )
+
+    // O total de duplicatas do grupo mudou: desfaz a validação do título
+    const g = existente.rows[0]
+    await invalidarTitulo(client, g.empresa_codigo, g.pessoa_codigo, g.titulo)
+
+    await client.query("COMMIT")
     res.json({ message: "Deletado com sucesso" })
   } catch (error) {
+    await client.query("ROLLBACK")
+    console.error("Erro ao excluir movimento:", error)
+
+    if (error.code === "23503") {
+      return res.status(409).json({
+        error: "Este movimento possui registros vinculados e não pode ser excluído.",
+      })
+    }
     res.status(500).json({ error: error.message })
+  } finally {
+    client.release()
   }
 }
 
@@ -277,7 +333,6 @@ const validar = async (req, res) => {
     const totalDuplicatas = Number(totais.rows[0].total_duplicatas)
     const totalItens = Number(totais.rows[0].total_itens)
 
-    // Compara em centavos para evitar erro de ponto flutuante
     if (Math.round(totalDuplicatas * 100) !== Math.round(totalItens * 100)) {
       const diferenca = totalDuplicatas - totalItens
       const fmt = (v) =>
